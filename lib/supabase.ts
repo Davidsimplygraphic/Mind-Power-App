@@ -1,0 +1,19 @@
+"use client";
+
+import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import { appEnv } from "@/lib/env";
+
+let browserClient: SupabaseClient | undefined;
+
+export function getSupabaseBrowserClient() {
+  if (!browserClient) {
+    browserClient = createBrowserClient(
+      appEnv.supabaseUrl,
+      appEnv.supabasePublishableKey,
+    );
+  }
+
+  return browserClient;
+}
