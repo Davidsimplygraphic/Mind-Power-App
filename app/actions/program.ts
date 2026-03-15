@@ -74,6 +74,29 @@ async function hasFinalSessionRecord(
   return Boolean(data?.id);
 }
 
+async function getProgramSessionCount(userId: string, programId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { count } = await supabase
+    .from("daily_sessions")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("program_id", programId);
+
+  return count ?? 0;
+}
+
+async function getProgramSessions(userId: string, programId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("daily_sessions")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("program_id", programId)
+    .order("day_number", { ascending: true });
+
+  return data ?? [];
+}
+
 export async function saveOnboardingAction(formData: FormData) {
   const motivationText = formData.get("motivation_text")?.toString().trim() ?? "";
 
@@ -248,6 +271,152 @@ export async function restartProgramAction() {
       "/dashboard",
       "message",
       "A new 28-day run begins today. Start with Day 1 when you are ready.",
+    ),
+  );
+}
+
+export async function resetProgramStartAction() {
+  const { supabase, user } = await requireOnboardedActionUser();
+  const [program, userProgram] = await Promise.all([
+    getProgramByTitle(),
+    getActiveUserProgram(user.id),
+  ]);
+
+  if (!program || !userProgram) {
+    redirect(
+      getRedirectPath(
+        "/dashboard",
+        "error",
+        "Start the program before trying to reset it.",
+      ),
+    );
+  }
+
+  const todayDate = getTodayDate(appEnv.appTimezone);
+  const currentDayRaw = getCurrentDay(userProgram.started_at, todayDate);
+  const sessionCount = await getProgramSessionCount(user.id, program.id);
+
+  if (currentDayRaw !== 1) {
+    redirect(
+      getRedirectPath(
+        "/dashboard",
+        "error",
+        "The start date can only be cleared on the same day you began the program.",
+      ),
+    );
+  }
+
+  if (sessionCount > 0) {
+    redirect(
+      getRedirectPath(
+        "/dashboard",
+        "error",
+        "Day 1 has already been logged. The start can only be cleared before any session is submitted.",
+      ),
+    );
+  }
+
+  const { error } = await supabase.from("user_programs").delete().eq("id", userProgram.id);
+
+  if (error) {
+    redirect(getRedirectPath("/dashboard", "error", error.message));
+  }
+
+  redirect(
+    getRedirectPath(
+      "/dashboard",
+      "message",
+      "Today's start was cleared. Come back tomorrow and begin Day 1 when you're ready.",
+    ),
+  );
+}
+
+export async function forceResetProgramStartAction() {
+  const { supabase, user } = await requireOnboardedActionUser();
+  const [program, userProgram] = await Promise.all([
+    getProgramByTitle(),
+    getActiveUserProgram(user.id),
+  ]);
+
+  if (!program || !userProgram) {
+    redirect(
+      getRedirectPath(
+        "/dashboard",
+        "error",
+        "Start the program before trying to reset it.",
+      ),
+    );
+  }
+
+  const todayDate = getTodayDate(appEnv.appTimezone);
+  const currentDayRaw = getCurrentDay(userProgram.started_at, todayDate);
+
+  if (currentDayRaw !== 1) {
+    redirect(
+      getRedirectPath(
+        "/dashboard",
+        "error",
+        "Day 1 can only be force-reset on the same day you began the program.",
+      ),
+    );
+  }
+
+  const existingSessions = await getProgramSessions(user.id, program.id);
+
+  if (existingSessions.length === 0) {
+    redirect(
+      getRedirectPath(
+        "/dashboard",
+        "error",
+        "No Day 1 session has been logged yet. Use the regular start reset instead.",
+      ),
+    );
+  }
+
+  const { error: deleteSessionsError } = await supabase
+    .from("daily_sessions")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("program_id", program.id);
+
+  if (deleteSessionsError) {
+    redirect(getRedirectPath("/dashboard", "error", deleteSessionsError.message));
+  }
+
+  const { error: deleteUserProgramError } = await supabase
+    .from("user_programs")
+    .delete()
+    .eq("id", userProgram.id);
+
+  if (deleteUserProgramError) {
+    const { error: restoreSessionsError } = await supabase
+      .from("daily_sessions")
+      .upsert(existingSessions);
+
+    if (restoreSessionsError) {
+      redirect(
+        getRedirectPath(
+          "/dashboard",
+          "error",
+          "The Day 1 reset failed and today's session could not be restored automatically. Check your database state before continuing.",
+        ),
+      );
+    }
+
+    redirect(
+      getRedirectPath(
+        "/dashboard",
+        "error",
+        "The Day 1 reset could not be completed cleanly. Your current start was kept in place.",
+      ),
+    );
+  }
+
+  redirect(
+    getRedirectPath(
+      "/dashboard",
+      "message",
+      "Day 1 was cleared, including today's session. You can begin again tomorrow from a clean start.",
     ),
   );
 }

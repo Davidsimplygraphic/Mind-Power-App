@@ -22,6 +22,15 @@ const emptyDraft: SessionDraft = {
 };
 
 const draftEventName = "mind-power-session-draft";
+const draftSnapshotCache = new Map<string, SessionDraft>();
+
+function isSameDraft(a: SessionDraft, b: SessionDraft) {
+  return (
+    a.exerciseCompleted === b.exerciseCompleted &&
+    a.reflectionText === b.reflectionText &&
+    a.promiseKept === b.promiseKept
+  );
+}
 
 function readDraft(draftKey: string): SessionDraft {
   if (typeof window === "undefined") {
@@ -50,6 +59,18 @@ function readDraft(draftKey: string): SessionDraft {
     window.localStorage.removeItem(draftKey);
     return emptyDraft;
   }
+}
+
+function getCachedDraftSnapshot(draftKey: string) {
+  const nextSnapshot = readDraft(draftKey);
+  const cachedSnapshot = draftSnapshotCache.get(draftKey);
+
+  if (cachedSnapshot && isSameDraft(cachedSnapshot, nextSnapshot)) {
+    return cachedSnapshot;
+  }
+
+  draftSnapshotCache.set(draftKey, nextSnapshot);
+  return nextSnapshot;
 }
 
 function subscribeToDraft(draftKey: string, callback: () => void) {
@@ -107,9 +128,9 @@ function writeDraft(draftKey: string, draft: SessionDraft) {
 }
 
 export function SessionForm({ draftKey }: SessionFormProps) {
-  const draft = useSyncExternalStore(
+  const draft = useSyncExternalStore<SessionDraft>(
     (callback) => subscribeToDraft(draftKey, callback),
-    () => readDraft(draftKey),
+    () => getCachedDraftSnapshot(draftKey),
     () => emptyDraft,
   );
 

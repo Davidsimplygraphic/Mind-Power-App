@@ -1,8 +1,10 @@
 import Link from "next/link";
 
 import { startProgramAction } from "@/app/actions/program";
+import { ForceResetProgramStartForm } from "@/components/force-reset-program-start-form";
 import { NoticeBanner } from "@/components/notice-banner";
 import { RestartProgramForm } from "@/components/restart-program-form";
+import { ResetProgramStartForm } from "@/components/reset-program-start-form";
 import { requireAuthenticatedUser } from "@/lib/auth";
 import { getUserProgramSnapshot } from "@/lib/data";
 import { getProgramEndState } from "@/lib/program";
@@ -130,6 +132,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     metrics.isWeekStartDay,
     weekTitle,
   );
+  const canResetStartToday =
+    !hasProgramEnded && metrics.currentDayRaw === 1 && snapshot.sessions.length === 0;
+  const canForceResetDayOne =
+    !hasProgramEnded && metrics.currentDayRaw === 1 && snapshot.sessions.length > 0;
 
   return (
     <div className="space-y-6">
@@ -209,12 +215,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 View Today&apos;s Session
               </Link>
             ) : (
-              <Link
-                className="primary-button w-full sm:w-auto"
-                href="/session"
-              >
-                Start Today&apos;s Session
-              </Link>
+              <>
+                <Link
+                  className="primary-button w-full sm:w-auto"
+                  href="/session"
+                >
+                  Start Today&apos;s Session
+                </Link>
+                {canResetStartToday ? (
+                  <ResetProgramStartForm />
+                ) : null}
+              </>
             )}
           </div>
         </div>
@@ -242,6 +253,41 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
         </div>
       </section>
+
+      {canResetStartToday ? (
+        <section className="surface space-y-3 p-6">
+          <p className="eyebrow">Adjust Start</p>
+          <h2 className="text-2xl">Started a little too early?</h2>
+          <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
+            If you have not logged Day 1 yet, you can clear today&apos;s start and come
+            back tomorrow to begin cleanly.
+          </p>
+        </section>
+      ) : null}
+
+      {canForceResetDayOne ? (
+        <section className="surface space-y-4 p-6">
+          <p className="eyebrow">Force Reset Day 1</p>
+          <h2 className="text-2xl">Need to wipe today and start fresh tomorrow?</h2>
+          <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
+            This clears the current run and permanently deletes today&apos;s Day 1
+            session so you can begin again tomorrow from a clean start.
+          </p>
+          <NoticeBanner
+            message="Use this only if you intentionally want to erase today's Day 1 progress."
+            tone="error"
+          />
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <ForceResetProgramStartForm />
+            <Link
+              className="secondary-button w-full sm:w-auto"
+              href="/session"
+            >
+              Keep Today&apos;s Start
+            </Link>
+          </div>
+        </section>
+      ) : null}
 
       {profile?.motivation_text ? (
         <section className="surface space-y-3 p-6">
