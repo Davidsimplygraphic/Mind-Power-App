@@ -1,7 +1,7 @@
 function normalizeSupabaseUrl(value: string | undefined) {
   if (!value) {
     throw new Error(
-      "Missing Supabase URL. Set NEXT_PUBLIC_SUPABASE_URL in the project root .env.local file.",
+      "Missing Supabase URL. Set NEXT_PUBLIC_SUPABASE_URL in your environment configuration.",
     );
   }
 
@@ -19,7 +19,7 @@ function getSupabasePublishableKey() {
 
   if (!key) {
     throw new Error(
-      "Missing Supabase publishable key. Set NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local.",
+      "Missing Supabase publishable key. Set NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY in your environment configuration.",
     );
   }
 

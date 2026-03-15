@@ -32,7 +32,7 @@ It is intentionally narrow:
 npm install
 ```
 
-2. Create a root `.env.local` file.
+2. Create a root `.env.local` file for local development.
 
 You can copy `.env.example` and fill in your real values.
 
@@ -47,6 +47,7 @@ Notes:
 - `NEXT_PUBLIC_SUPABASE_URL` can be a full URL or just your Supabase project ref. The app normalizes both.
 - `APP_TIMEZONE` controls how the app decides what "today" means for day tracking. Set it to your real timezone.
 - The storage bucket name is fixed as `mind-power-audio` in both the schema and app code.
+- Production deployments do not need a `.env.local` file, but they do need the same environment variables configured in the host platform.
 
 3. In Supabase, enable Email auth.
 
@@ -80,7 +81,7 @@ This seeds:
 - 1 `Mind Power` program
 - 4 weekly records with placeholder audio paths and exercise text
 
-6. Upload your private audio files to Supabase Storage.
+6. Upload your audio files to Supabase Storage.
 
 - Open `Storage`
 - Open the `mind-power-audio` bucket
@@ -121,10 +122,26 @@ The main placeholders live in `supabase/seed.sql`.
 ## Development notes
 
 - Private routes are protected server-side.
-- Signed audio URLs are generated on the server for private storage playback.
+- Public audio URLs are generated from Supabase Storage object paths.
 - Missing audio and missing exercise text are handled safely in the UI.
 - If today's session is already complete, the session page switches to a read-only summary.
-- If a signed audio URL expires, refreshing the page generates a new one.
+
+## Netlify deployment
+
+Use the standard Next.js deployment flow in Netlify.
+
+Required environment variables:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- or `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `APP_TIMEZONE`
+
+Recommended build settings:
+
+- Build command: `npm run build`
+- Node version: `20` or newer
+- Publish directory: let Netlify use its detected Next.js defaults
 
 ## Scripts
 
