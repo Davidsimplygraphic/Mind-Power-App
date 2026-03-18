@@ -9,6 +9,7 @@ import type {
   ConsistencyItem,
   ConsistencyLog,
   DailySession,
+  ExerciseResponse,
   Profile,
   Program,
   ProgramWeek,
@@ -128,6 +129,51 @@ export const getConsistencyLogsByDate = cache(async (userId: string, logDate: st
 
   return (data as ConsistencyLog[] | null) ?? [];
 });
+
+export const getExerciseResponsesForRunDay = cache(
+  async (userId: string, userProgramId: string, dayNumber: number) => {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("exercise_responses")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("user_program_id", userProgramId)
+      .eq("day_number", dayNumber)
+      .order("section_id", { ascending: true });
+
+    if (error) {
+      return [] as ExerciseResponse[];
+    }
+
+    return (data as ExerciseResponse[] | null) ?? [];
+  },
+);
+
+export const getExerciseResponsesForRunDayRange = cache(
+  async (
+    userId: string,
+    userProgramId: string,
+    dayNumberStart: number,
+    dayNumberEnd: number,
+  ) => {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("exercise_responses")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("user_program_id", userProgramId)
+      .gte("day_number", dayNumberStart)
+      .lte("day_number", dayNumberEnd)
+      .order("day_number", { ascending: true })
+      .order("section_id", { ascending: true });
+
+    if (error) {
+      return [] as ExerciseResponse[];
+    }
+
+    return (data as ExerciseResponse[] | null) ?? [];
+  },
+);
 
 export function getPublicAudioUrl(audioPath: string | null) {
   const trimmedAudioPath = normalizeAudioPath(audioPath);

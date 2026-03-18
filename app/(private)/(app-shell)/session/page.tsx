@@ -1,14 +1,15 @@
 import Link from "next/link";
 
 import { AudioCard } from "@/components/audio-card";
-import { ExerciseChecklist } from "@/components/exercise-checklist";
 import { ExerciseTimer } from "@/components/exercise-timer";
+import { ExerciseWorkbook } from "@/components/exercise-workbook";
 import { NoticeBanner } from "@/components/notice-banner";
 import { RestartProgramForm } from "@/components/restart-program-form";
+import { SessionContentTabs } from "@/components/session-content-tabs";
 import { SessionForm } from "@/components/session-form";
 import { requireAuthenticatedUser } from "@/lib/auth";
-import { getPublicAudioUrl, getUserProgramSnapshot } from "@/lib/data";
-import { parseExerciseText } from "@/lib/exercises";
+import { getExerciseResponsesForRunDay, getPublicAudioUrl, getUserProgramSnapshot } from "@/lib/data";
+import { getExerciseContentForWeek } from "@/lib/exercise-content";
 import { getMindPowerWeekAudioTracks } from "@/lib/mind-power-audio-catalog";
 import { getProgramEndState } from "@/lib/program";
 import type { RouteSearchParams } from "@/lib/route-utils";
@@ -125,8 +126,12 @@ export default async function SessionPage({ searchParams }: SessionPageProps) {
         }))
       : [];
   const exerciseTimerKey = `mind-power-exercise-timer-${user.id}-${userProgram.program_id}-${metrics.currentDay}-${userProgram.started_at}`;
-  const exerciseChecklistKey = `mind-power-exercise-checklist-${user.id}-${userProgram.program_id}-${metrics.currentDay}-${userProgram.started_at}`;
-  const exerciseItems = parseExerciseText(currentWeekContent?.exercise_text);
+  const exerciseContent = getExerciseContentForWeek(metrics.currentWeek);
+  const exerciseResponses = await getExerciseResponsesForRunDay(
+    user.id,
+    userProgram.id,
+    metrics.currentDay,
+  );
 
   return (
     <div className="space-y-6">
@@ -182,33 +187,56 @@ export default async function SessionPage({ searchParams }: SessionPageProps) {
         </section>
       ) : null}
 
-      {metrics.isWeekStartDay && currentWeekContent ? (
-        <AudioCard
-          tracks={weekAudioTracks}
-          title={currentWeekContent.title ?? `Week ${metrics.currentWeek}`}
-        />
-      ) : null}
-
       {currentWeekContent ? (
-        <section className="surface space-y-4 p-6">
-          <div className="space-y-1">
-            <p className="eyebrow">Exercises</p>
-            <h2 className="text-2xl">
-              {currentWeekContent.title ?? `Week ${metrics.currentWeek}`} practice
-            </h2>
-          </div>
-          {exerciseItems.length > 0 ? (
-            <ExerciseChecklist
-              items={exerciseItems}
-              storageKey={exerciseChecklistKey}
-            />
-          ) : (
-            <p className="text-base leading-8 text-[var(--foreground)]">
-              {currentWeekContent.exercise_text?.trim() ||
-                "Exercise text is missing for this week. Update the matching program_weeks row to add it."}
-            </p>
-          )}
-        </section>
+        <SessionContentTabs
+          audioContent={
+            metrics.isWeekStartDay ? (
+              <AudioCard
+                tracks={weekAudioTracks}
+                title={currentWeekContent.title ?? `Week ${metrics.currentWeek}`}
+              />
+            ) : (
+              <div className="surface-muted space-y-3 p-5">
+                <p className="eyebrow">Audio</p>
+                <h3 className="text-2xl">Today is a practice day.</h3>
+                <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
+                  The canonical week-start audio is surfaced on Day{" "}
+                  {((metrics.currentWeek - 1) * 7) + 1}. You can still revisit the
+                  full audio list anytime in the library.
+                </p>
+                <Link
+                  className="secondary-button w-full sm:w-auto"
+                  href="/library"
+                >
+                  Open Library Audio
+                </Link>
+              </div>
+            )
+          }
+          exercisesContent={
+            exerciseContent ? (
+              <ExerciseWorkbook
+                content={exerciseContent}
+                dayNumber={metrics.currentDay}
+                initialResponses={exerciseResponses}
+                key={`workbook-${userProgram.id}-${metrics.currentDay}-${metrics.currentWeek}`}
+                programId={userProgram.program_id}
+                timerStorageKey={exerciseTimerKey}
+                userProgramId={userProgram.id}
+                weekNumber={metrics.currentWeek}
+              />
+            ) : (
+              <div className="surface-muted space-y-3 p-5">
+                <p className="eyebrow">Exercises</p>
+                <h3 className="text-2xl">Workbook content unavailable.</h3>
+                <p className="text-base leading-7 text-[var(--muted)]">
+                  {currentWeekContent.exercise_text?.trim() ||
+                    "Exercise text is missing for this week. Update the matching program_weeks row to add it."}
+                </p>
+              </div>
+            )
+          }
+        />
       ) : null}
 
       {currentWeekContent && !todaySession ? (

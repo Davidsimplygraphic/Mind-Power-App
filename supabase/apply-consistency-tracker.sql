@@ -6,7 +6,8 @@ create table if not exists public.consistency_items (
   title text not null check (char_length(trim(title)) > 0 and char_length(title) <= 80),
   description text,
   is_active boolean not null default true,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create table if not exists public.consistency_logs (
@@ -15,8 +16,15 @@ create table if not exists public.consistency_logs (
   consistency_item_id uuid not null references public.consistency_items(id) on delete cascade,
   log_date date not null,
   completed boolean not null default true,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
+
+alter table public.consistency_items
+  add column if not exists updated_at timestamptz not null default now();
+
+alter table public.consistency_logs
+  add column if not exists updated_at timestamptz not null default now();
 
 create unique index if not exists consistency_logs_user_item_day_key
   on public.consistency_logs (user_id, consistency_item_id, log_date);

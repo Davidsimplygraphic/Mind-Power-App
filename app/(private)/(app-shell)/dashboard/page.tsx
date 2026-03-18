@@ -12,6 +12,7 @@ import { requireAuthenticatedUser } from "@/lib/auth";
 import {
   getConsistencyItemsByUserId,
   getConsistencyLogsByDate,
+  getExerciseResponsesForRunDayRange,
   getUserProgramSnapshot,
 } from "@/lib/data";
 import { getProgramEndState } from "@/lib/program";
@@ -130,7 +131,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     );
   }
 
-  const { metrics, currentWeekContent, profile, program } = snapshot;
+  const { metrics, currentWeekContent, profile, program, userProgram } = snapshot;
   const { hasCompletedFinalSession, hasProgramEnded, hasWindowClosedWithoutFinalSession } =
     getProgramEndState(metrics, program.duration_days);
   const weekTitle = currentWeekContent?.title ?? `Week ${metrics.currentWeek}`;
@@ -145,10 +146,28 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     !hasProgramEnded && metrics.currentDayRaw === 1 && snapshot.sessions.length === 0;
   const canForceResetDayOne =
     !hasProgramEnded && metrics.currentDayRaw === 1 && snapshot.sessions.length > 0;
+  const weekStartDay = (metrics.currentWeek - 1) * 7 + 1;
+  const weekEndDay = weekStartDay + 6;
+  const completedWeekDayBoundary = Math.min(metrics.currentDay, weekEndDay);
+  const hasPastDayForReflection = metrics.currentDay > 1;
   const [consistencyItems, consistencyLogsForToday] = await Promise.all([
     getConsistencyItemsByUserId(user.id),
     getConsistencyLogsByDate(user.id, snapshot.todayDate),
   ]);
+  const weeklyExerciseResponses = await getExerciseResponsesForRunDayRange(
+    user.id,
+    userProgram.id,
+    weekStartDay,
+    completedWeekDayBoundary,
+  );
+  const yesterdayResponseCount = hasPastDayForReflection
+    ? weeklyExerciseResponses.filter(
+        (response) => response.day_number === metrics.currentDay - 1,
+      ).length
+    : 0;
+  const weeklyResponseDaysCount = new Set(
+    weeklyExerciseResponses.map((response) => response.day_number),
+  ).size;
 
   return (
     <div className="space-y-6">
@@ -274,6 +293,32 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         todayDate={snapshot.todayDate}
       />
 
+      <section className="surface space-y-4 p-6">
+        <p className="eyebrow">Reflection Foundations</p>
+        <h2 className="text-2xl">Your reflection memory is being prepared.</h2>
+        <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
+          This run now stores structured workbook responses per day. That enables
+          upcoming features like reflecting yesterday&apos;s notes, weekly summaries,
+          and pattern detection.
+        </p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="surface-muted p-5">
+            <p className="eyebrow">Yesterday&apos;s Captures</p>
+            <p className="mt-2 text-3xl">{yesterdayResponseCount}</p>
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              Workbook responses found for yesterday.
+            </p>
+          </div>
+          <div className="surface-muted p-5">
+            <p className="eyebrow">Week Response Days</p>
+            <p className="mt-2 text-3xl">{weeklyResponseDaysCount}</p>
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              Days this week with at least one workbook response.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {canResetStartToday ? (
         <section className="surface space-y-3 p-6">
           <p className="eyebrow">Adjust Start</p>
@@ -313,8 +358,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <p className="eyebrow">Reset Challenge</p>
         <h2 className="text-2xl">Start over from Day 1</h2>
         <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
-          This clears your current run&apos;s progress and session history, then resets
-          the challenge to a fresh Day 1 state.
+          This clears the current run&apos;s progress, daily sessions, workbook responses,
+          and run-window consistency logs, then resets the challenge to a fresh Day 1
+          state.
         </p>
         <ResetChallengeForm />
       </section>

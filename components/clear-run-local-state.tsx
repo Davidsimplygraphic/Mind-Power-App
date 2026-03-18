@@ -11,6 +11,7 @@ const runStoragePrefixes = [
   "mind-power-session-",
   "mind-power-exercise-timer-",
   "mind-power-exercise-checklist-",
+  "mind-power-exercise-workbook-",
 ];
 
 function shouldClearRunKey(key: string) {

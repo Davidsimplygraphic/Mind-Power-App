@@ -50,6 +50,7 @@ export type ConsistencyItem = {
   description: string | null;
   is_active: boolean;
   created_at: string;
+  updated_at: string;
 };
 
 export type ConsistencyLog = {
@@ -59,6 +60,21 @@ export type ConsistencyLog = {
   log_date: string;
   completed: boolean;
   created_at: string;
+  updated_at: string;
+};
+
+export type ExerciseResponse = {
+  id: string;
+  user_id: string;
+  program_id: string;
+  user_program_id: string;
+  week_number: number;
+  day_number: number;
+  section_id: string;
+  response_text: string | null;
+  response_json: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type IntegrityScore = {

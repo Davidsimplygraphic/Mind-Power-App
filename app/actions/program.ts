@@ -163,6 +163,76 @@ async function resetCurrentProgramRun(
         "Your active program run could not be found. Refresh and try resetting again.",
     };
   }
+  const currentRun = existingUserProgram;
+
+  const [
+    { data: existingSessions, error: sessionsReadError },
+    { data: existingExerciseResponses, error: exerciseResponsesReadError },
+    { data: existingConsistencyLogs, error: consistencyLogsReadError },
+  ] = await Promise.all([
+    supabase
+      .from("daily_sessions")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("program_id", programId),
+    supabase
+      .from("exercise_responses")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("program_id", programId)
+      .eq("user_program_id", userProgramId),
+    supabase
+      .from("consistency_logs")
+      .select("*")
+      .eq("user_id", userId)
+      .gte("log_date", currentRun.started_at)
+      .lte("log_date", todayDate),
+  ]);
+
+  if (sessionsReadError || exerciseResponsesReadError || consistencyLogsReadError) {
+    return {
+      ok: false as const,
+      error:
+        sessionsReadError?.message ||
+        exerciseResponsesReadError?.message ||
+        consistencyLogsReadError?.message ||
+        "Unable to read current challenge state before reset.",
+    };
+  }
+
+  const snapshotSessions = existingSessions ?? [];
+  const snapshotExerciseResponses = existingExerciseResponses ?? [];
+  const snapshotConsistencyLogs = existingConsistencyLogs ?? [];
+
+  async function rollbackReset() {
+    await supabase
+      .from("user_programs")
+      .update({
+        started_at: currentRun.started_at,
+        completed_at: currentRun.completed_at,
+      })
+      .eq("id", userProgramId)
+      .eq("user_id", userId)
+      .eq("program_id", programId);
+
+    if (snapshotSessions.length > 0) {
+      await supabase.from("daily_sessions").upsert(snapshotSessions, {
+        onConflict: "user_id,program_id,day_number",
+      });
+    }
+
+    if (snapshotExerciseResponses.length > 0) {
+      await supabase.from("exercise_responses").upsert(snapshotExerciseResponses, {
+        onConflict: "user_program_id,day_number,section_id",
+      });
+    }
+
+    if (snapshotConsistencyLogs.length > 0) {
+      await supabase.from("consistency_logs").upsert(snapshotConsistencyLogs, {
+        onConflict: "user_id,consistency_item_id,log_date",
+      });
+    }
+  }
 
   const { error: updateError } = await supabase
     .from("user_programs")
@@ -185,20 +255,46 @@ async function resetCurrentProgramRun(
     .eq("program_id", programId);
 
   if (deleteSessionsError) {
-    await supabase
-      .from("user_programs")
-      .update({
-        started_at: existingUserProgram.started_at,
-        completed_at: existingUserProgram.completed_at,
-      })
-      .eq("id", userProgramId)
-      .eq("user_id", userId)
-      .eq("program_id", programId);
+    await rollbackReset();
 
     return {
       ok: false as const,
       error:
         "The challenge reset could not be completed cleanly. Your previous run was kept in place.",
+    };
+  }
+
+  const { error: deleteExerciseResponsesError } = await supabase
+    .from("exercise_responses")
+    .delete()
+    .eq("user_id", userId)
+    .eq("program_id", programId)
+    .eq("user_program_id", userProgramId);
+
+  if (deleteExerciseResponsesError) {
+    await rollbackReset();
+
+    return {
+      ok: false as const,
+      error:
+        "The challenge reset failed while clearing workbook responses. Your previous run was restored.",
+    };
+  }
+
+  const { error: deleteConsistencyLogsError } = await supabase
+    .from("consistency_logs")
+    .delete()
+    .eq("user_id", userId)
+    .gte("log_date", currentRun.started_at)
+    .lte("log_date", todayDate);
+
+  if (deleteConsistencyLogsError) {
+    await rollbackReset();
+
+    return {
+      ok: false as const,
+      error:
+        "The challenge reset failed while clearing consistency logs. Your previous run was restored.",
     };
   }
 
@@ -586,6 +682,7 @@ export async function createConsistencyItemAction(formData: FormData) {
     title,
     description: description || null,
     is_active: true,
+    updated_at: new Date().toISOString(),
   });
 
   if (error) {
@@ -634,6 +731,7 @@ export async function setConsistencyTodayCompletionAction(formData: FormData) {
       consistency_item_id: consistencyItemId,
       log_date: logDate,
       completed,
+      updated_at: new Date().toISOString(),
     },
     {
       onConflict: "user_id,consistency_item_id,log_date",
@@ -658,7 +756,10 @@ export async function setConsistencyItemStatusAction(formData: FormData) {
 
   const { error } = await supabase
     .from("consistency_items")
-    .update({ is_active: isActive })
+    .update({
+      is_active: isActive,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", consistencyItemId)
     .eq("user_id", user.id);
 

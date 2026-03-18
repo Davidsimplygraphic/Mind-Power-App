@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type MutableRefObject,
+} from "react";
 
 type ExerciseTimerProps = {
   storageKey: string;
@@ -13,11 +20,14 @@ type StoredTimerState = {
   remainingSeconds: number;
   status: TimerStatus;
   endAtMs: number | null;
+  completedAtMs: number | null;
+  soundPlayedForCompletion: boolean;
 };
 
 const presetOptions = [60, 180, 300, 600, 900, 1200];
 const defaultSeconds = 300;
 const timerEventName = "mind-power-exercise-timer";
+const timerSoundPreferenceKey = "mind-power-timer-sound-enabled";
 
 function formatSeconds(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
@@ -32,6 +42,8 @@ function createDefaultState(selectedSeconds = defaultSeconds): StoredTimerState 
     remainingSeconds: selectedSeconds,
     status: "idle",
     endAtMs: null,
+    completedAtMs: null,
+    soundPlayedForCompletion: false,
   };
 }
 
@@ -51,6 +63,14 @@ function parseStoredState(value: string | null): StoredTimerState | null {
     const endAtMs =
       typeof parsed.endAtMs === "number" && Number.isFinite(parsed.endAtMs)
         ? parsed.endAtMs
+        : null;
+    const completedAtMs =
+      typeof parsed.completedAtMs === "number" && Number.isFinite(parsed.completedAtMs)
+        ? parsed.completedAtMs
+        : null;
+    const parsedSoundPlayedForCompletion =
+      typeof parsed.soundPlayedForCompletion === "boolean"
+        ? parsed.soundPlayedForCompletion
         : null;
 
     if (!presetOptions.includes(selectedSeconds)) {
@@ -75,6 +95,9 @@ function parseStoredState(value: string | null): StoredTimerState | null {
       remainingSeconds: Math.min(Math.round(remainingSeconds), selectedSeconds),
       status,
       endAtMs,
+      completedAtMs,
+      soundPlayedForCompletion:
+        parsedSoundPlayedForCompletion ?? (status === "complete"),
     };
   } catch {
     return null;
@@ -103,6 +126,12 @@ function readTimerState(storageKey: string): StoredTimerState {
       remainingSeconds,
       status: remainingSeconds === 0 ? "complete" : "running",
       endAtMs: remainingSeconds === 0 ? null : restoredState.endAtMs,
+      completedAtMs:
+        remainingSeconds === 0
+          ? (restoredState.completedAtMs ?? restoredState.endAtMs ?? Date.now())
+          : null,
+      soundPlayedForCompletion:
+        remainingSeconds === 0 ? restoredState.soundPlayedForCompletion : false,
     };
   }
 
@@ -114,7 +143,9 @@ function isSameTimerState(a: StoredTimerState, b: StoredTimerState) {
     a.selectedSeconds === b.selectedSeconds &&
     a.remainingSeconds === b.remainingSeconds &&
     a.status === b.status &&
-    a.endAtMs === b.endAtMs
+    a.endAtMs === b.endAtMs &&
+    a.completedAtMs === b.completedAtMs &&
+    a.soundPlayedForCompletion === b.soundPlayedForCompletion
   );
 }
 
@@ -179,12 +210,120 @@ function writeTimerState(storageKey: string, timerState: StoredTimerState) {
   notifyTimerChange(storageKey);
 }
 
+function readTimerSoundPreference() {
+  if (typeof window === "undefined") {
+    return true;
+  }
+
+  const storedValue = window.localStorage.getItem(timerSoundPreferenceKey);
+
+  if (storedValue === "false") {
+    return false;
+  }
+
+  return true;
+}
+
+function writeTimerSoundPreference(enabled: boolean) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(timerSoundPreferenceKey, enabled ? "true" : "false");
+}
+
+function createAudioContext() {
+  const AudioContextConstructor =
+    window.AudioContext ||
+    (window as typeof window & { webkitAudioContext?: typeof AudioContext })
+      .webkitAudioContext;
+
+  if (!AudioContextConstructor) {
+    return null;
+  }
+
+  return new AudioContextConstructor();
+}
+
+async function unlockAudioContext(
+  audioContextRef: MutableRefObject<AudioContext | null>,
+) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!audioContextRef.current) {
+    audioContextRef.current = createAudioContext();
+  }
+
+  if (!audioContextRef.current) {
+    return;
+  }
+
+  if (audioContextRef.current.state === "suspended") {
+    await audioContextRef.current.resume();
+  }
+}
+
+async function playWebAudioFallback(
+  audioContextRef: MutableRefObject<AudioContext | null>,
+) {
+  await unlockAudioContext(audioContextRef);
+  const audioContext = audioContextRef.current;
+
+  if (!audioContext) {
+    return false;
+  }
+
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  const now = audioContext.currentTime;
+
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(660, now);
+  oscillator.frequency.exponentialRampToValueAtTime(520, now + 0.35);
+  gainNode.gain.setValueAtTime(0.0001, now);
+  gainNode.gain.exponentialRampToValueAtTime(0.2, now + 0.02);
+  gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+
+  oscillator.start(now);
+  oscillator.stop(now + 0.5);
+
+  return true;
+}
+
+async function playTimerCompletionSound(
+  audioContextRef: MutableRefObject<AudioContext | null>,
+) {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    const audio = new Audio("/sounds/timer-complete.mp3");
+    audio.preload = "auto";
+    await audio.play();
+    return true;
+  } catch {
+    return playWebAudioFallback(audioContextRef);
+  }
+}
+
 export function ExerciseTimer({ storageKey }: ExerciseTimerProps) {
   const timerState = useSyncExternalStore<StoredTimerState>(
     (callback) => subscribeToTimer(storageKey, callback),
     () => getCachedTimerSnapshot(storageKey),
     () => defaultTimerState,
   );
+  const [soundEnabled, setSoundEnabled] = useState(readTimerSoundPreference);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  useEffect(() => {
+    writeTimerSoundPreference(soundEnabled);
+  }, [soundEnabled]);
 
   useEffect(() => {
     if (timerState.status !== "running" || !timerState.endAtMs) {
@@ -205,6 +344,52 @@ export function ExerciseTimer({ storageKey }: ExerciseTimerProps) {
       writeTimerState(storageKey, timerState);
     }
   }, [storageKey, timerState]);
+
+  useEffect(() => {
+    if (
+      timerState.status === "complete" &&
+      !soundEnabled &&
+      !timerState.soundPlayedForCompletion
+    ) {
+      writeTimerState(storageKey, {
+        ...timerState,
+        completedAtMs: timerState.completedAtMs ?? Date.now(),
+        soundPlayedForCompletion: true,
+      });
+    }
+  }, [soundEnabled, storageKey, timerState]);
+
+  useEffect(() => {
+    if (
+      timerState.status !== "complete" ||
+      timerState.soundPlayedForCompletion ||
+      !soundEnabled
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const playSound = async () => {
+      const didPlay = await playTimerCompletionSound(audioContextRef);
+
+      if (!didPlay || cancelled) {
+        return;
+      }
+
+      writeTimerState(storageKey, {
+        ...timerState,
+        completedAtMs: timerState.completedAtMs ?? Date.now(),
+        soundPlayedForCompletion: true,
+      });
+    };
+
+    void playSound();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [soundEnabled, storageKey, timerState]);
 
   const completionLabel = useMemo(() => {
     if (timerState.status === "complete") {
@@ -227,6 +412,8 @@ export function ExerciseTimer({ storageKey }: ExerciseTimerProps) {
   }
 
   function handleStart() {
+    void unlockAudioContext(audioContextRef);
+
     const remainingSeconds =
       timerState.remainingSeconds > 0
         ? timerState.remainingSeconds
@@ -237,6 +424,8 @@ export function ExerciseTimer({ storageKey }: ExerciseTimerProps) {
       remainingSeconds,
       status: "running",
       endAtMs: Date.now() + remainingSeconds * 1000,
+      completedAtMs: null,
+      soundPlayedForCompletion: false,
     });
   }
 
@@ -255,14 +444,20 @@ export function ExerciseTimer({ storageKey }: ExerciseTimerProps) {
       remainingSeconds,
       status: remainingSeconds === 0 ? "complete" : "paused",
       endAtMs: null,
+      completedAtMs: remainingSeconds === 0 ? Date.now() : null,
+      soundPlayedForCompletion: false,
     });
   }
 
   function handleResume() {
+    void unlockAudioContext(audioContextRef);
+
     writeTimerState(storageKey, {
       ...timerState,
       status: "running",
       endAtMs: Date.now() + timerState.remainingSeconds * 1000,
+      completedAtMs: null,
+      soundPlayedForCompletion: false,
     });
   }
 
@@ -283,6 +478,13 @@ export function ExerciseTimer({ storageKey }: ExerciseTimerProps) {
         <p className="text-sm text-[var(--muted)]">
           This timer stays with this day in this browser, even if you refresh.
         </p>
+        <button
+          className="secondary-button mt-3 min-h-0 px-4 py-2 text-sm"
+          onClick={() => setSoundEnabled((currentState) => !currentState)}
+          type="button"
+        >
+          Timer sound: {soundEnabled ? "On" : "Off"}
+        </button>
       </div>
 
       <div className="flex flex-wrap gap-2">
