@@ -6,6 +6,8 @@ import { buildProgramMetrics, getCurrentDay, getTodayDate } from "@/lib/program"
 import { getSupabasePublicClient } from "@/lib/supabase-public";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type {
+  ConsistencyItem,
+  ConsistencyLog,
   DailySession,
   Profile,
   Program,
@@ -95,6 +97,36 @@ export const getDailySessions = cache(async (userId: string, programId: string) 
     .order("day_number", { ascending: true });
 
   return (data as DailySession[] | null) ?? [];
+});
+
+export const getConsistencyItemsByUserId = cache(async (userId: string) => {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("consistency_items")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    return [] as ConsistencyItem[];
+  }
+
+  return (data as ConsistencyItem[] | null) ?? [];
+});
+
+export const getConsistencyLogsByDate = cache(async (userId: string, logDate: string) => {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("consistency_logs")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("log_date", logDate);
+
+  if (error) {
+    return [] as ConsistencyLog[];
+  }
+
+  return (data as ConsistencyLog[] | null) ?? [];
 });
 
 export function getPublicAudioUrl(audioPath: string | null) {

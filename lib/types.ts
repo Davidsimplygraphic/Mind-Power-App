@@ -43,6 +43,24 @@ export type DailySession = {
   created_at: string;
 };
 
+export type ConsistencyItem = {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type ConsistencyLog = {
+  id: string;
+  user_id: string;
+  consistency_item_id: string;
+  log_date: string;
+  completed: boolean;
+  created_at: string;
+};
+
 export type IntegrityScore = {
   answeredCount: number;
   keptCount: number;

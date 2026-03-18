@@ -52,9 +52,14 @@ Notes:
 3. In Supabase, enable Email auth.
 
 - Open Supabase Dashboard
-- Go to `Authentication > Providers`
+- Go to `Authentication > Sign In / Providers`
 - Enable `Email`
 - Configure whether email confirmation should be required
+- If email confirmation is enabled, also configure the confirmation flow:
+  - In `Authentication > URL Configuration`, set your production `Site URL`
+  - Add your allowed app URLs to `Redirect URLs`, for example `http://localhost:3000` and your deployed site URL
+  - In `Authentication > Email`, open the `Confirm signup` template and change `{{ .ConfirmationURL }}` to `{{ .RedirectTo }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`
+  - If you expect to send more than a few test emails, configure custom SMTP for production delivery
 
 4. Run the schema SQL.
 
@@ -90,10 +95,10 @@ This seeds:
 
 Example object paths:
 
-- `week-1/mind-power-week-1.mp3`
-- `week-2/mind-power-week-2.mp3`
-- `week-3/mind-power-week-3.mp3`
-- `week-4/mind-power-week-4.mp3`
+- `Week 1/10 Exercises for the Week.mp3`
+- `Week 2/07 Exercises for the Week.mp3`
+- `Week 3/07 Exercises for the Week.mp3`
+- `Week 4/03 Contacting the Subconscious Mind.mp3`
 
 7. Replace the placeholder exercise content.
 

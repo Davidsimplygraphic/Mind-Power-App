@@ -4,11 +4,43 @@ import { redirect } from "next/navigation";
 
 import { appEnv } from "@/lib/env";
 import { getActiveUserProgram, getProgramByTitle, getProfileByUserId } from "@/lib/data";
-import { getCurrentDay, getWeekNumber, PROGRAM_DURATION_DAYS, getTodayDate } from "@/lib/program";
+import {
+  getCurrentDay,
+  getTodayDate,
+  getWeekNumber,
+  PROGRAM_DURATION_DAYS,
+} from "@/lib/program";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
-function getRedirectPath(pathname: string, type: "error" | "message", message: string) {
-  return `${pathname}?${type}=${encodeURIComponent(message)}`;
+type RedirectMessageType = "error" | "message";
+
+function buildPathWithParams(
+  pathname: string,
+  params: Record<string, string | undefined>,
+) {
+  const searchParams = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value) {
+      searchParams.set(key, value);
+    }
+  }
+
+  const queryString = searchParams.toString();
+
+  return queryString ? `${pathname}?${queryString}` : pathname;
+}
+
+function getRedirectPath(
+  pathname: string,
+  type: RedirectMessageType,
+  message: string,
+  extraParams: Record<string, string | undefined> = {},
+) {
+  return buildPathWithParams(pathname, {
+    [type]: message,
+    ...extraParams,
+  });
 }
 
 function parsePromiseAnswer(value: FormDataEntryValue | null) {
@@ -17,6 +49,18 @@ function parsePromiseAnswer(value: FormDataEntryValue | null) {
   }
 
   if (value === "no") {
+    return false;
+  }
+
+  return null;
+}
+
+function parseBooleanFlag(value: FormDataEntryValue | null) {
+  if (value === "true") {
+    return true;
+  }
+
+  if (value === "false") {
     return false;
   }
 
@@ -95,6 +139,70 @@ async function getProgramSessions(userId: string, programId: string) {
     .order("day_number", { ascending: true });
 
   return data ?? [];
+}
+
+async function resetCurrentProgramRun(
+  userId: string,
+  programId: string,
+  userProgramId: string,
+  todayDate: string,
+) {
+  const supabase = await createSupabaseServerClient();
+  const { data: existingUserProgram } = await supabase
+    .from("user_programs")
+    .select("started_at, completed_at")
+    .eq("id", userProgramId)
+    .eq("user_id", userId)
+    .eq("program_id", programId)
+    .maybeSingle();
+
+  if (!existingUserProgram) {
+    return {
+      ok: false as const,
+      error:
+        "Your active program run could not be found. Refresh and try resetting again.",
+    };
+  }
+
+  const { error: updateError } = await supabase
+    .from("user_programs")
+    .update({
+      started_at: todayDate,
+      completed_at: null,
+    })
+    .eq("id", userProgramId)
+    .eq("user_id", userId)
+    .eq("program_id", programId);
+
+  if (updateError) {
+    return { ok: false as const, error: updateError.message };
+  }
+
+  const { error: deleteSessionsError } = await supabase
+    .from("daily_sessions")
+    .delete()
+    .eq("user_id", userId)
+    .eq("program_id", programId);
+
+  if (deleteSessionsError) {
+    await supabase
+      .from("user_programs")
+      .update({
+        started_at: existingUserProgram.started_at,
+        completed_at: existingUserProgram.completed_at,
+      })
+      .eq("id", userProgramId)
+      .eq("user_id", userId)
+      .eq("program_id", programId);
+
+    return {
+      ok: false as const,
+      error:
+        "The challenge reset could not be completed cleanly. Your previous run was kept in place.",
+    };
+  }
+
+  return { ok: true as const };
 }
 
 export async function saveOnboardingAction(formData: FormData) {
@@ -180,7 +288,7 @@ export async function startProgramAction() {
 }
 
 export async function restartProgramAction() {
-  const { supabase, user } = await requireOnboardedActionUser();
+  const { user } = await requireOnboardedActionUser();
   const [program, userProgram] = await Promise.all([
     getProgramByTitle(),
     getActiveUserProgram(user.id),
@@ -228,42 +336,15 @@ export async function restartProgramAction() {
     );
   }
 
-  const previousStartedAt = userProgram.started_at;
-  const previousCompletedAt = userProgram.completed_at;
-  const { error: updateError } = await supabase
-    .from("user_programs")
-    .update({
-      started_at: todayDate,
-      completed_at: null,
-    })
-    .eq("id", userProgram.id);
+  const resetResult = await resetCurrentProgramRun(
+    user.id,
+    program.id,
+    userProgram.id,
+    todayDate,
+  );
 
-  if (updateError) {
-    redirect(getRedirectPath("/dashboard", "error", updateError.message));
-  }
-
-  const { error: deleteError } = await supabase
-    .from("daily_sessions")
-    .delete()
-    .eq("user_id", user.id)
-    .eq("program_id", program.id);
-
-  if (deleteError) {
-    await supabase
-      .from("user_programs")
-      .update({
-        started_at: previousStartedAt,
-        completed_at: previousCompletedAt,
-      })
-      .eq("id", userProgram.id);
-
-    redirect(
-      getRedirectPath(
-        "/dashboard",
-        "error",
-        "The program could not be restarted cleanly. Your previous run was kept in place.",
-      ),
-    );
+  if (!resetResult.ok) {
+    redirect(getRedirectPath("/dashboard", "error", resetResult.error));
   }
 
   redirect(
@@ -271,6 +352,58 @@ export async function restartProgramAction() {
       "/dashboard",
       "message",
       "A new 28-day run begins today. Start with Day 1 when you are ready.",
+      { local_reset: "challenge" },
+    ),
+  );
+}
+
+export async function resetChallengeAction(formData: FormData) {
+  const confirmed = formData.get("confirm_reset") === "yes";
+
+  if (!confirmed) {
+    redirect(
+      getRedirectPath(
+        "/dashboard",
+        "error",
+        "Challenge reset was not confirmed.",
+      ),
+    );
+  }
+
+  const { user } = await requireOnboardedActionUser();
+  const [program, userProgram] = await Promise.all([
+    getProgramByTitle(),
+    getActiveUserProgram(user.id),
+  ]);
+
+  if (!program || !userProgram) {
+    redirect(
+      getRedirectPath(
+        "/dashboard",
+        "error",
+        "Start the challenge before trying to reset it.",
+      ),
+    );
+  }
+
+  const todayDate = getTodayDate(appEnv.appTimezone);
+  const resetResult = await resetCurrentProgramRun(
+    user.id,
+    program.id,
+    userProgram.id,
+    todayDate,
+  );
+
+  if (!resetResult.ok) {
+    redirect(getRedirectPath("/dashboard", "error", resetResult.error));
+  }
+
+  redirect(
+    getRedirectPath(
+      "/dashboard",
+      "message",
+      "Challenge reset complete. You are back at Day 1 with a clean run.",
+      { local_reset: "challenge" },
     ),
   );
 }
@@ -327,6 +460,7 @@ export async function resetProgramStartAction() {
       "/dashboard",
       "message",
       "Today's start was cleared. Come back tomorrow and begin Day 1 when you're ready.",
+      { local_reset: "challenge" },
     ),
   );
 }
@@ -417,8 +551,122 @@ export async function forceResetProgramStartAction() {
       "/dashboard",
       "message",
       "Day 1 was cleared, including today's session. You can begin again tomorrow from a clean start.",
+      { local_reset: "challenge" },
     ),
   );
+}
+
+export async function createConsistencyItemAction(formData: FormData) {
+  const { supabase, user } = await requireOnboardedActionUser();
+  const title = formData.get("title")?.toString().trim() ?? "";
+  const description = formData.get("description")?.toString().trim() ?? "";
+
+  if (!title) {
+    redirect(
+      getRedirectPath(
+        "/dashboard",
+        "error",
+        "Add a title for your consistency point.",
+      ),
+    );
+  }
+
+  if (title.length > 80) {
+    redirect(
+      getRedirectPath(
+        "/dashboard",
+        "error",
+        "Consistency titles must be 80 characters or fewer.",
+      ),
+    );
+  }
+
+  const { error } = await supabase.from("consistency_items").insert({
+    user_id: user.id,
+    title,
+    description: description || null,
+    is_active: true,
+  });
+
+  if (error) {
+    redirect(getRedirectPath("/dashboard", "error", error.message));
+  }
+
+  redirect(
+    getRedirectPath(
+      "/dashboard",
+      "message",
+      "Consistency point added.",
+    ),
+  );
+}
+
+export async function setConsistencyTodayCompletionAction(formData: FormData) {
+  const { supabase, user } = await requireOnboardedActionUser();
+  const consistencyItemId = formData.get("consistency_item_id")?.toString().trim() ?? "";
+  const completed = parseBooleanFlag(formData.get("completed"));
+
+  if (!consistencyItemId || completed === null) {
+    redirect(getRedirectPath("/dashboard", "error", "Invalid consistency update request."));
+  }
+
+  const { data: ownedItem } = await supabase
+    .from("consistency_items")
+    .select("id")
+    .eq("id", consistencyItemId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!ownedItem) {
+    redirect(
+      getRedirectPath(
+        "/dashboard",
+        "error",
+        "Consistency point not found.",
+      ),
+    );
+  }
+
+  const logDate = getTodayDate(appEnv.appTimezone);
+  const { error } = await supabase.from("consistency_logs").upsert(
+    {
+      user_id: user.id,
+      consistency_item_id: consistencyItemId,
+      log_date: logDate,
+      completed,
+    },
+    {
+      onConflict: "user_id,consistency_item_id,log_date",
+    },
+  );
+
+  if (error) {
+    redirect(getRedirectPath("/dashboard", "error", error.message));
+  }
+
+  redirect("/dashboard");
+}
+
+export async function setConsistencyItemStatusAction(formData: FormData) {
+  const { supabase, user } = await requireOnboardedActionUser();
+  const consistencyItemId = formData.get("consistency_item_id")?.toString().trim() ?? "";
+  const isActive = parseBooleanFlag(formData.get("is_active"));
+
+  if (!consistencyItemId || isActive === null) {
+    redirect(getRedirectPath("/dashboard", "error", "Invalid consistency status update."));
+  }
+
+  const { error } = await supabase
+    .from("consistency_items")
+    .update({ is_active: isActive })
+    .eq("id", consistencyItemId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    redirect(getRedirectPath("/dashboard", "error", error.message));
+  }
+
+  redirect("/dashboard");
 }
 
 export async function submitSessionAction(formData: FormData) {

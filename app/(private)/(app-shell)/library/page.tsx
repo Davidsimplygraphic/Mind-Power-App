@@ -1,5 +1,6 @@
 import { NoticeBanner } from "@/components/notice-banner";
 import { PrivateAudioPlayer } from "@/components/private-audio-player";
+import { WeekNotesPanel } from "@/components/week-notes-panel";
 import {
   getAudioTitleFromPath,
   isWmaAudioPath,
@@ -47,8 +48,8 @@ export default async function LibraryPage() {
           <p className="eyebrow">Library</p>
           <h2 className="text-4xl">All four weeks, in one calm place.</h2>
           <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
-            Each week shows the canonical session audio, the exercise text, and the
-            full uploaded audio list from the current bucket structure.
+            Each week includes canonical audio, full audio uploads, PDF notes, and
+            exercise text in one focused view.
           </p>
         </div>
       </section>
@@ -171,6 +172,21 @@ export default async function LibraryPage() {
                         verified catalog.
                       </p>
                     )}
+                  </div>
+                </details>
+              </div>
+
+              <div className="space-y-3">
+                <p className="eyebrow">PDF Notes</p>
+                <details className="surface-muted p-5">
+                  <summary className="cursor-pointer list-none text-base font-semibold text-[var(--foreground)]">
+                    Open Week {week.week_number} Notes
+                  </summary>
+                  <div className="mt-4">
+                    <WeekNotesPanel
+                      weekNumber={week.week_number}
+                      weekTitle={week.title ?? `Week ${week.week_number}`}
+                    />
                   </div>
                 </details>
               </div>

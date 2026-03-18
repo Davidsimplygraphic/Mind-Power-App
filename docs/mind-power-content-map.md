@@ -6,12 +6,12 @@ weekly session audio.
 
 ## Canonical weekly session audio
 
-Verified from the uploaded bucket object rows on 2026-03-15:
+Verified from live public bucket object responses on 2026-03-16:
 
 - Week 1 -> `Week 1/10 Exercises for the Week.mp3`
-- Week 2 -> `Week 2/07 Exercises for the Week.wma`
-- Week 3 -> `Week 3/07 Exercises for the Week.wma`
-- Week 4 -> `Week 4/03 Contacting the Subconscious Mind.wma`
+- Week 2 -> `Week 2/07 Exercises for the Week.mp3`
+- Week 3 -> `Week 3/07 Exercises for the Week.mp3`
+- Week 4 -> `Week 4/03 Contacting the Subconscious Mind.mp3`
 
 Selection rule:
 
@@ -21,7 +21,7 @@ Selection rule:
 Week 4 note:
 
 - The uploaded Week 4 objects do not contain `Exercises for the Week`
-- The canonical fallback remains `Week 4/03 Contacting the Subconscious Mind.wma`
+- The canonical fallback remains `Week 4/03 Contacting the Subconscious Mind.mp3`
 
 ## Full uploaded weekly audio lists
 
@@ -38,46 +38,42 @@ Week 1:
 - `Week 1/10 Exercises for the Week.mp3`
 
 Week 2:
-- `Week 2/01 Know Thyself.wma`
-- `Week 2/02 Doing the Exercises.wma`
-- `Week 2/03 The Mind as a Garden.wma`
-- `Week 2/04 Cultivating the Conscious Mind.wma`
-- `Week 2/05 Seeding.wma`
-- `Week 2/06 Visualization.wma`
-- `Week 2/07 Exercises for the Week.wma`
+- `Week 2/01 Know Thyself.mp3`
+- `Week 2/02 Doing the Exercises.mp3`
+- `Week 2/03 The Mind as a Garden.mp3`
+- `Week 2/04 Cultivating the Conscious Mind.mp3`
+- `Week 2/05 Seeding.mp3`
+- `Week 2/06 Visualization.mp3`
+- `Week 2/07 Exercises for the Week.mp3`
 
 Week 3:
-- `Week 3/01 Understanding the System.wma`
-- `Week 3/02 Decision, Action, Persistence.wma`
-- `Week 3/03 Thoughts and Health.wma`
-- `Week 3/04 Affirmations.wma`
-- `Week 3/05 Acknowledging.wma`
-- `Week 3/06 Setting up a Creating Period.wma`
-- `Week 3/07 Exercises for the Week.wma`
+- `Week 3/01 Understanding the System.mp3`
+- `Week 3/02 Decision, Action, Persistence.mp3`
+- `Week 3/03 Thoughts and Health.mp3`
+- `Week 3/04 Affirmations.mp3`
+- `Week 3/05 Acknowledging.mp3`
+- `Week 3/06 Setting up a Creating Period.mp3`
+- `Week 3/07 Exercises for the Week.mp3`
 
 Week 4:
-- `Week 4/01 Developing Mind Power Habits (David Ellis's conflicted copy).wma`
-- `Week 4/01 Developing Mind Power Habits.wma`
-- `Week 4/02 Goals.wma`
-- `Week 4/03 Contacting the Subconscious Mind.wma`
-- `Week 4/04 The Six Laws Expanded.wma`
-- `Week 4/05 Self Image.wma`
-- `Week 4/06 You are Unique.wma`
+- `Week 4/01 Developing Mind Power Habits.mp3`
+- `Week 4/02 Goals.mp3`
+- `Week 4/03 Contacting the Subconscious Mind.mp3`
+- `Week 4/04 The Six Laws Expanded.mp3`
+- `Week 4/05 Self Image.mp3`
+- `Week 4/06 You are Unique.mp3`
 
 ## Source files used for canonical mapping
 
-- Week 1: `C:\Users\Admin\Downloads\MP_extracted\MP\Mind Power Course Week 1\10 Exercises for the Week.wma`
-- Week 2: `C:\Users\Admin\Downloads\MP_extracted\MP\Mind Power Course Week 2\07 Exercises for the Week.wma`
-- Week 3: `C:\Users\Admin\Downloads\MP_extracted\MP\Mind Power Course Week 3\07 Exercises for the Week.wma`
-- Week 4 fallback: `C:\Users\Admin\Downloads\MP_extracted\MP\Mind Power Course Week 4\03 Contacting the Subconscious Mind.wma`
+- Week 1: `C:\Users\Admin\Downloads\MP_extracted\MP\Mind Power Course Week 1\10 Exercises for the Week.mp3`
+- Week 2: `C:\Users\Admin\Downloads\MP_extracted\MP\Mind Power Course Week 2\07 Exercises for the Week.mp3`
+- Week 3: `C:\Users\Admin\Downloads\MP_extracted\MP\Mind Power Course Week 3\07 Exercises for the Week.mp3`
+- Week 4 fallback: `C:\Users\Admin\Downloads\MP_extracted\MP\Mind Power Course Week 4\03 Contacting the Subconscious Mind.mp3`
 
 ## Format compatibility
 
-Week 1 is now uploaded as `.mp3`, which is broadly browser-friendly.
-
-Weeks 2-4 are still `.wma`. The app still attempts browser playback, but
-browser support is not universal for those files. If playback fails, the UI
-keeps the page stable and offers direct open/download actions for the file.
+All four weeks are now uploaded as `.mp3`, which is broadly browser-friendly.
+The older Week 2-4 `.wma` references are no longer the live canonical paths.
 
 ## Content update SQL
 

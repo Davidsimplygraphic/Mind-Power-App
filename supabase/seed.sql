@@ -3,19 +3,19 @@ values ('Mind Power', 28)
 on conflict (title) do update
 set duration_days = excluded.duration_days;
 
--- Verified against the live `mind-power-audio` bucket object rows on 2026-03-15.
+-- Verified against the live public `mind-power-audio` bucket objects on 2026-03-16.
 -- The bucket now uses public object URLs in the app, and `audio_path` stores the
 -- canonical weekly session audio for each week.
 -- These paths are case-sensitive and must match the exact storage object names:
 -- Week 1/10 Exercises for the Week.mp3
--- Week 2/07 Exercises for the Week.wma
--- Week 3/07 Exercises for the Week.wma
--- Week 4/03 Contacting the Subconscious Mind.wma
+-- Week 2/07 Exercises for the Week.mp3
+-- Week 3/07 Exercises for the Week.mp3
+-- Week 4/03 Contacting the Subconscious Mind.mp3
 --
 -- Week 4 note:
 -- The uploaded storage objects do not include a Week 4 file named
 -- `Exercises for the Week`, so the current mapping preserves the existing
--- fallback to `Week 4/03 Contacting the Subconscious Mind.wma`.
+-- fallback to `Week 4/03 Contacting the Subconscious Mind.mp3`.
 
 with base_program as (
   select id
@@ -60,7 +60,7 @@ cross join (
     (
       2,
       'Week 2',
-      'Week 2/07 Exercises for the Week.wma',
+      'Week 2/07 Exercises for the Week.mp3',
       $$1. Pick a quality or characteristic that you wish to possess. Spend 5 minutes every day visualising yourself possessing that quality.
 
 2. For 5 minutes every day, seed what it would feel like to have that quality, as in exercise 1.
@@ -84,7 +84,7 @@ cross join (
     (
       3,
       'Week 3',
-      'Week 3/07 Exercises for the Week.wma',
+      'Week 3/07 Exercises for the Week.mp3',
       $$1. Pick a quality that you wish you had. For 5 minutes every day, seed and visualise that you have that quality, that you are that person. Combine seeding and visualisation as one technique.
 
 2. Spend 5 minutes each day affirming to yourself that you are that person.
@@ -102,7 +102,7 @@ cross join (
     (
       4,
       'Week 4',
-      'Week 4/03 Contacting the Subconscious Mind.wma',
+      'Week 4/03 Contacting the Subconscious Mind.mp3',
       $$1. For 5 minutes every day repeat the following affirmation: "I always remember my dreams". Write your dreams down in a special Dream Journal.
 
 2. Each day, for 10 minutes, use the three steps to reach the subconscious.

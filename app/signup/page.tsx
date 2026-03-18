@@ -1,17 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { signInAction } from "@/app/actions/auth";
+import { signUpAction } from "@/app/actions/auth";
 import { NoticeBanner } from "@/components/notice-banner";
 import { getHomeRouteForCurrentUser } from "@/lib/auth";
 import type { RouteSearchParams } from "@/lib/route-utils";
 import { readSearchParam } from "@/lib/route-utils";
 
-type LoginPageProps = {
+type SignupPageProps = {
   searchParams?: RouteSearchParams;
 };
 
-export default async function LoginPage({ searchParams }: LoginPageProps) {
+export default async function SignupPage({ searchParams }: SignupPageProps) {
   const homeRoute = await getHomeRouteForCurrentUser();
 
   if (homeRoute !== "/login") {
@@ -28,24 +28,34 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <section className="surface flex flex-col justify-between gap-10 p-6 md:p-8">
           <div className="space-y-4">
             <p className="eyebrow">Mind Power</p>
-            <h1 className="max-w-xl text-5xl sm:text-6xl">Welcome back.</h1>
+            <h1 className="max-w-xl text-5xl sm:text-6xl">Create your account.</h1>
             <p className="max-w-lg text-base leading-7 text-[var(--muted)]">
-              Sign in to continue your Mind Power journey and pick up exactly where
-              your daily practice left off.
+              Start your 4-week Mind Power challenge with one clear step per day.
             </p>
           </div>
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="surface-muted p-4">
+              <p className="eyebrow">Challenge</p>
+              <p className="mt-2 text-lg">4 weeks. 28 days. Daily structure.</p>
+            </div>
+            <div className="surface-muted p-4">
+              <p className="eyebrow">Flow</p>
+              <p className="mt-2 text-lg">Audio, exercises, and reflection.</p>
+            </div>
+          </div>
+
           <div className="surface-muted p-5">
-            <p className="eyebrow">Need an account?</p>
+            <p className="eyebrow">Already registered?</p>
             <p className="mt-2 text-base leading-7 text-[var(--muted)]">
-              First time here? Create your account to start the full 4-week challenge.
+              If you already have an account, sign in and continue your current run.
             </p>
             <div className="mt-4">
               <Link
                 className="secondary-button w-full sm:w-auto"
-                href="/signup"
+                href="/login"
               >
-                Go to Create Account
+                Go to Sign In
               </Link>
             </div>
           </div>
@@ -53,10 +63,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
         <section className="surface space-y-5 p-6 md:p-8">
           <div className="space-y-2">
-            <p className="eyebrow">Sign In</p>
-            <h2 className="text-3xl">Access your existing account</h2>
+            <p className="eyebrow">Create Account</p>
+            <h2 className="text-3xl">Set up your new account</h2>
             <p className="text-sm leading-6 text-[var(--muted)]">
-              Use the email and password you already set up.
+              Use an email and password you&apos;ll use to return each day.
             </p>
           </div>
 
@@ -72,7 +82,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <input
               name="redirect_to"
               type="hidden"
-              value="/login"
+              value="/signup"
             />
             <div className="space-y-2">
               <label
@@ -100,11 +110,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 Password
               </label>
               <input
-                autoComplete="current-password"
+                autoComplete="new-password"
                 className="field"
                 id="password"
                 name="password"
-                placeholder="Your password"
+                placeholder="At least 6 characters"
                 required
                 type="password"
               />
@@ -112,9 +122,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
             <button
               className="primary-button w-full"
-              formAction={signInAction}
+              formAction={signUpAction}
             >
-              Sign In
+              Create Account
             </button>
           </form>
         </section>

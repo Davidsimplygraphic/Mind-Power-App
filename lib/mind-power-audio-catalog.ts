@@ -20,31 +20,30 @@ const mindPowerWeekAudioPaths: Record<number, string[]> = {
     "Week 1/10 Exercises for the Week.mp3",
   ],
   2: [
-    "Week 2/01 Know Thyself.wma",
-    "Week 2/02 Doing the Exercises.wma",
-    "Week 2/03 The Mind as a Garden.wma",
-    "Week 2/04 Cultivating the Conscious Mind.wma",
-    "Week 2/05 Seeding.wma",
-    "Week 2/06 Visualization.wma",
-    "Week 2/07 Exercises for the Week.wma",
+    "Week 2/01 Know Thyself.mp3",
+    "Week 2/02 Doing the Exercises.mp3",
+    "Week 2/03 The Mind as a Garden.mp3",
+    "Week 2/04 Cultivating the Conscious Mind.mp3",
+    "Week 2/05 Seeding.mp3",
+    "Week 2/06 Visualization.mp3",
+    "Week 2/07 Exercises for the Week.mp3",
   ],
   3: [
-    "Week 3/01 Understanding the System.wma",
-    "Week 3/02 Decision, Action, Persistence.wma",
-    "Week 3/03 Thoughts and Health.wma",
-    "Week 3/04 Affirmations.wma",
-    "Week 3/05 Acknowledging.wma",
-    "Week 3/06 Setting up a Creating Period.wma",
-    "Week 3/07 Exercises for the Week.wma",
+    "Week 3/01 Understanding the System.mp3",
+    "Week 3/02 Decision, Action, Persistence.mp3",
+    "Week 3/03 Thoughts and Health.mp3",
+    "Week 3/04 Affirmations.mp3",
+    "Week 3/05 Acknowledging.mp3",
+    "Week 3/06 Setting up a Creating Period.mp3",
+    "Week 3/07 Exercises for the Week.mp3",
   ],
   4: [
-    "Week 4/01 Developing Mind Power Habits (David Ellis's conflicted copy).wma",
-    "Week 4/01 Developing Mind Power Habits.wma",
-    "Week 4/02 Goals.wma",
-    "Week 4/03 Contacting the Subconscious Mind.wma",
-    "Week 4/04 The Six Laws Expanded.wma",
-    "Week 4/05 Self Image.wma",
-    "Week 4/06 You are Unique.wma",
+    "Week 4/01 Developing Mind Power Habits.mp3",
+    "Week 4/02 Goals.mp3",
+    "Week 4/03 Contacting the Subconscious Mind.mp3",
+    "Week 4/04 The Six Laws Expanded.mp3",
+    "Week 4/05 Self Image.mp3",
+    "Week 4/06 You are Unique.mp3",
   ],
 };
 
@@ -59,7 +58,7 @@ export function getMindPowerCanonicalAudioPath(weekNumber: number) {
   }
 
   if (weekNumber === 4) {
-    return "Week 4/03 Contacting the Subconscious Mind.wma";
+    return "Week 4/03 Contacting the Subconscious Mind.mp3";
   }
 
   return null;

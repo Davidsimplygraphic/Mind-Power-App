@@ -1,12 +1,19 @@
 import Link from "next/link";
 
 import { startProgramAction } from "@/app/actions/program";
+import { ClearRunLocalState } from "@/components/clear-run-local-state";
+import { ConsistencyTracker } from "@/components/consistency-tracker";
 import { ForceResetProgramStartForm } from "@/components/force-reset-program-start-form";
 import { NoticeBanner } from "@/components/notice-banner";
+import { ResetChallengeForm } from "@/components/reset-challenge-form";
 import { RestartProgramForm } from "@/components/restart-program-form";
 import { ResetProgramStartForm } from "@/components/reset-program-start-form";
 import { requireAuthenticatedUser } from "@/lib/auth";
-import { getUserProgramSnapshot } from "@/lib/data";
+import {
+  getConsistencyItemsByUserId,
+  getConsistencyLogsByDate,
+  getUserProgramSnapshot,
+} from "@/lib/data";
 import { getProgramEndState } from "@/lib/program";
 import type { RouteSearchParams } from "@/lib/route-utils";
 import { readSearchParam } from "@/lib/route-utils";
@@ -47,6 +54,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const message = readSearchParam(resolvedSearchParams.message);
   const error = readSearchParam(resolvedSearchParams.error);
+  const localResetSignal = readSearchParam(resolvedSearchParams.local_reset) ?? null;
   const hasCompleteWeekContent = snapshot.weeks.length >= 4;
 
   if (!snapshot.program) {
@@ -63,6 +71,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   if (!snapshot.userProgram || !snapshot.metrics) {
     return (
       <div className="space-y-6">
+        <ClearRunLocalState resetSignal={localResetSignal} />
         {message ? <NoticeBanner message={message} /> : null}
         {error ? (
           <NoticeBanner
@@ -136,9 +145,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     !hasProgramEnded && metrics.currentDayRaw === 1 && snapshot.sessions.length === 0;
   const canForceResetDayOne =
     !hasProgramEnded && metrics.currentDayRaw === 1 && snapshot.sessions.length > 0;
+  const [consistencyItems, consistencyLogsForToday] = await Promise.all([
+    getConsistencyItemsByUserId(user.id),
+    getConsistencyLogsByDate(user.id, snapshot.todayDate),
+  ]);
 
   return (
     <div className="space-y-6">
+      <ClearRunLocalState resetSignal={localResetSignal} />
       {message ? <NoticeBanner message={message} /> : null}
       {error ? (
         <NoticeBanner
@@ -254,6 +268,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </div>
       </section>
 
+      <ConsistencyTracker
+        items={consistencyItems}
+        logsForToday={consistencyLogsForToday}
+        todayDate={snapshot.todayDate}
+      />
+
       {canResetStartToday ? (
         <section className="surface space-y-3 p-6">
           <p className="eyebrow">Adjust Start</p>
@@ -288,6 +308,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
         </section>
       ) : null}
+
+      <section className="surface space-y-4 p-6">
+        <p className="eyebrow">Reset Challenge</p>
+        <h2 className="text-2xl">Start over from Day 1</h2>
+        <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
+          This clears your current run&apos;s progress and session history, then resets
+          the challenge to a fresh Day 1 state.
+        </p>
+        <ResetChallengeForm />
+      </section>
 
       {profile?.motivation_text ? (
         <section className="surface space-y-3 p-6">
