@@ -2,52 +2,15 @@ import Link from "next/link";
 
 import { startProgramAction } from "@/app/actions/program";
 import { ClearRunLocalState } from "@/components/clear-run-local-state";
-import { ConsistencyTracker } from "@/components/consistency-tracker";
-import { ForceResetProgramStartForm } from "@/components/force-reset-program-start-form";
 import { NoticeBanner } from "@/components/notice-banner";
-import { ResetChallengeForm } from "@/components/reset-challenge-form";
-import { RestartProgramForm } from "@/components/restart-program-form";
-import { ResetProgramStartForm } from "@/components/reset-program-start-form";
 import { requireAuthenticatedUser } from "@/lib/auth";
-import {
-  getConsistencyItemsByUserId,
-  getConsistencyLogsByDate,
-  getExerciseResponsesForRunDayRange,
-  getUserProgramSnapshot,
-} from "@/lib/data";
-import { getProgramEndState } from "@/lib/program";
+import { getUserProgramSnapshot } from "@/lib/data";
 import type { RouteSearchParams } from "@/lib/route-utils";
 import { readSearchParam } from "@/lib/route-utils";
 
 type DashboardPageProps = {
   searchParams?: RouteSearchParams;
 };
-
-function getNextStepCopy(
-  hasProgramEnded: boolean,
-  hasWindowClosedWithoutFinalSession: boolean,
-  isSessionComplete: boolean,
-  isWeekStartDay: boolean,
-  weekTitle: string,
-) {
-  if (hasProgramEnded) {
-    if (hasWindowClosedWithoutFinalSession) {
-      return "The 28-day window has closed. Review what you captured, then begin again from Day 1 whenever you want another run.";
-    }
-
-    return "Your 28-day run is complete. Take in what changed, revisit the library, or begin again from Day 1 when you feel ready.";
-  }
-
-  if (isSessionComplete) {
-    return "Today is complete. Let the work settle, and return tomorrow for the next guided step.";
-  }
-
-  if (isWeekStartDay) {
-    return `Listen to ${weekTitle}'s audio, then complete today's exercise set and reflection.`;
-  }
-
-  return `Repeat ${weekTitle}'s exercises, reflect briefly, and close the day with integrity.`;
-}
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const user = await requireAuthenticatedUser();
@@ -60,7 +23,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   if (!snapshot.program) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <NoticeBanner
           message="Mind Power content is missing from the database. Verify that the program and week content were seeded successfully."
           tone="error"
@@ -71,15 +34,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   if (!snapshot.userProgram || !snapshot.metrics) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 pb-4">
         <ClearRunLocalState resetSignal={localResetSignal} />
         {message ? <NoticeBanner message={message} /> : null}
-        {error ? (
-          <NoticeBanner
-            message={error}
-            tone="error"
-          />
-        ) : null}
+        {error ? <NoticeBanner message={error} tone="error" /> : null}
         {!hasCompleteWeekContent ? (
           <NoticeBanner
             message="Program content is incomplete. Seed all 4 program weeks before starting."
@@ -87,290 +45,161 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           />
         ) : null}
 
-        <section className="surface space-y-6 p-6">
-          <div className="space-y-3">
-            <p className="eyebrow">Ready to begin</p>
-            <h2 className="text-4xl">Your 28-day program is set up and waiting.</h2>
-            <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
-              Starting the program sets Day 1 to today. From there, the app will guide
-              you through one audio at the start of each week and one daily set of
-              exercises for each day that follows.
+        <div className="surface p-6 space-y-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent)]">
+            <span className="text-2xl font-black text-white">M</span>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold">Mind Power</h2>
+            <p className="text-[var(--muted)] leading-6">
+              Your 28-day program is ready. Begin Day 1 to start your journey.
             </p>
           </div>
-
           {snapshot.profile?.motivation_text ? (
-            <div className="surface-muted p-5">
-              <p className="eyebrow">Your reason</p>
-              <p className="mt-3 text-lg leading-8">{snapshot.profile.motivation_text}</p>
+            <div className="surface-muted p-4">
+              <p className="eyebrow mb-2">Your reason</p>
+              <p className="text-base leading-7">{snapshot.profile.motivation_text}</p>
             </div>
           ) : null}
-
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex flex-col gap-3">
             {hasCompleteWeekContent ? (
-              <form
-                action={startProgramAction}
-                className="w-full sm:w-auto"
-              >
-                <button
-                  className="primary-button w-full sm:w-auto"
-                  type="submit"
-                >
+              <form action={startProgramAction}>
+                <button className="primary-button w-full" type="submit">
                   Begin Day 1
                 </button>
               </form>
             ) : null}
-            <Link
-              className="secondary-button w-full sm:w-auto"
-              href="/library"
-            >
+            <Link className="secondary-button w-full" href="/library">
               Preview the Library
             </Link>
           </div>
-        </section>
+        </div>
       </div>
     );
   }
 
-  const { metrics, currentWeekContent, profile, program, userProgram } = snapshot;
-  const { hasCompletedFinalSession, hasProgramEnded, hasWindowClosedWithoutFinalSession } =
-    getProgramEndState(metrics, program.duration_days);
-  const weekTitle = currentWeekContent?.title ?? `Week ${metrics.currentWeek}`;
-  const nextStep = getNextStepCopy(
-    hasProgramEnded,
-    hasWindowClosedWithoutFinalSession,
-    metrics.isSessionComplete,
-    metrics.isWeekStartDay,
-    weekTitle,
-  );
-  const canResetStartToday =
-    !hasProgramEnded && metrics.currentDayRaw === 1 && snapshot.sessions.length === 0;
-  const canForceResetDayOne =
-    !hasProgramEnded && metrics.currentDayRaw === 1 && snapshot.sessions.length > 0;
-  const weekStartDay = (metrics.currentWeek - 1) * 7 + 1;
-  const weekEndDay = weekStartDay + 6;
-  const completedWeekDayBoundary = Math.min(metrics.currentDay, weekEndDay);
-  const hasPastDayForReflection = metrics.currentDay > 1;
-  const [consistencyItems, consistencyLogsForToday] = await Promise.all([
-    getConsistencyItemsByUserId(user.id),
-    getConsistencyLogsByDate(user.id, snapshot.todayDate),
-  ]);
-  const weeklyExerciseResponses = await getExerciseResponsesForRunDayRange(
-    user.id,
-    userProgram.id,
-    weekStartDay,
-    completedWeekDayBoundary,
-  );
-  const yesterdayResponseCount = hasPastDayForReflection
-    ? weeklyExerciseResponses.filter(
-        (response) => response.day_number === metrics.currentDay - 1,
-      ).length
-    : 0;
-  const weeklyResponseDaysCount = new Set(
-    weeklyExerciseResponses.map((response) => response.day_number),
-  ).size;
+  const { metrics, program } = snapshot;
+
+  const phaseNames = ["ONE", "TWO", "THREE", "FOUR"];
+  const phaseName = phaseNames[(metrics.currentWeek - 1)] ?? "ONE";
+
+  const quotes = [
+    { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+    { text: "The mind is everything. What you think, you become.", author: "Buddha" },
+    { text: "Change your thoughts and you change your world.", author: "Norman Vincent Peale" },
+    { text: "Whatever the mind can conceive and believe, it can achieve.", author: "Napoleon Hill" },
+    { text: "You are the master of your destiny.", author: "Napoleon Hill" },
+    { text: "As a man thinketh in his heart, so is he.", author: "James Allen" },
+    { text: "Repetition is the mother of skill.", author: "Tony Robbins" },
+  ];
+  const quote = quotes[metrics.currentDay % quotes.length];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 pb-4">
       <ClearRunLocalState resetSignal={localResetSignal} />
       {message ? <NoticeBanner message={message} /> : null}
-      {error ? (
-        <NoticeBanner
-          message={error}
-          tone="error"
-        />
-      ) : null}
-      {!hasCompleteWeekContent ? (
-        <NoticeBanner
-          message="Only part of the program content is loaded. Add all 4 weeks to keep the daily guidance accurate."
-          tone="error"
-        />
-      ) : null}
+      {error ? <NoticeBanner message={error} tone="error" /> : null}
 
-      <section className="surface space-y-6 p-6">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-3">
-            <p className="eyebrow">
-              {hasProgramEnded
-                ? hasWindowClosedWithoutFinalSession
-                  ? "28-Day Window Complete"
-                  : "Program Complete"
-                : "Today's Focus"}
-            </p>
-            <div className="space-y-2">
-              {hasProgramEnded ? (
-                <>
-                  <h2 className="text-4xl sm:text-5xl">
-                    {hasWindowClosedWithoutFinalSession
-                      ? "Your guided window has ended."
-                      : "Your 28-day run is complete."}
-                  </h2>
-                  <p className="text-lg text-[var(--muted)]">
-                    {hasWindowClosedWithoutFinalSession
-                      ? "No new session is due today. Review your 28-day record below or start the program again from Day 1."
-                      : hasCompletedFinalSession
-                        ? `Day ${program.duration_days} is complete. There is no new session due today.`
-                        : "There is no new session due today."}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <h2 className="text-4xl sm:text-5xl">
-                    Day {metrics.currentDay} of {program.duration_days}
-                  </h2>
-                  <p className="text-lg text-[var(--muted)]">
-                    Week {metrics.currentWeek} of 4 -{" "}
-                    {metrics.isSessionComplete ? "Session complete" : "Session incomplete"}
-                  </p>
-                </>
-              )}
+      {/* Progress card */}
+      <Link href="/progress">
+        <div className="surface p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="eyebrow">Progress</p>
+              <p className="mt-1 text-base font-bold">PHASE {phaseName}</p>
             </div>
-            <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">{nextStep}</p>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)]">
+              <svg fill="none" height={16} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} viewBox="0 0 24 24" width={16}>
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
           </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            {hasProgramEnded ? (
-              <>
-                {hasCompleteWeekContent ? (
-                  <RestartProgramForm>Start the Program Again</RestartProgramForm>
-                ) : null}
-                <Link
-                  className="secondary-button w-full sm:w-auto"
-                  href="/progress"
-                >
-                  Review Your Progress
-                </Link>
-              </>
-            ) : metrics.isSessionComplete ? (
-              <Link
-                className="secondary-button w-full sm:w-auto"
-                href="/session"
-              >
-                View Today&apos;s Session
-              </Link>
-            ) : (
-              <>
-                <Link
-                  className="primary-button w-full sm:w-auto"
-                  href="/session"
-                >
-                  Start Today&apos;s Session
-                </Link>
-                {canResetStartToday ? (
-                  <ResetProgramStartForm />
-                ) : null}
-              </>
-            )}
+          <div className="h-2 w-full rounded-full bg-[var(--card-muted)]">
+            <div
+              className="h-2 rounded-full bg-[var(--accent)] transition-all"
+              style={{ width: `${metrics.progressPercentage}%` }}
+            />
           </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="surface-muted p-5">
-            <p className="eyebrow">Current Streak</p>
-            <p className="mt-3 text-4xl">{metrics.streak}</p>
-            <p className="mt-2 text-sm text-[var(--muted)]">Consecutive completed days.</p>
-          </div>
-          <div className="surface-muted p-5">
-            <p className="eyebrow">Integrity Score</p>
-            <p className="mt-3 text-4xl">{metrics.integrityScore.percentage}%</p>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              {metrics.integrityScore.keptCount} kept out of{" "}
-              {metrics.integrityScore.answeredCount} answered.
-            </p>
-          </div>
-          <div className="surface-muted p-5">
-            <p className="eyebrow">Program Progress</p>
-            <p className="mt-3 text-4xl">{metrics.progressPercentage}%</p>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              {metrics.completedDaysCount} of {program.duration_days} days completed.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <ConsistencyTracker
-        items={consistencyItems}
-        logsForToday={consistencyLogsForToday}
-        todayDate={snapshot.todayDate}
-      />
-
-      <section className="surface space-y-4 p-6">
-        <p className="eyebrow">Reflection Foundations</p>
-        <h2 className="text-2xl">Your reflection memory is being prepared.</h2>
-        <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
-          This run now stores structured workbook responses per day. That enables
-          upcoming features like reflecting yesterday&apos;s notes, weekly summaries,
-          and pattern detection.
-        </p>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="surface-muted p-5">
-            <p className="eyebrow">Yesterday&apos;s Captures</p>
-            <p className="mt-2 text-3xl">{yesterdayResponseCount}</p>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              Workbook responses found for yesterday.
-            </p>
-          </div>
-          <div className="surface-muted p-5">
-            <p className="eyebrow">Week Response Days</p>
-            <p className="mt-2 text-3xl">{weeklyResponseDaysCount}</p>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              Days this week with at least one workbook response.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {canResetStartToday ? (
-        <section className="surface space-y-3 p-6">
-          <p className="eyebrow">Adjust Start</p>
-          <h2 className="text-2xl">Started a little too early?</h2>
-          <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
-            If you have not logged Day 1 yet, you can clear today&apos;s start and come
-            back tomorrow to begin cleanly.
+          <p className="mt-2 text-xs text-[var(--muted)]">
+            Day {metrics.currentDay} of {program.duration_days}
           </p>
-        </section>
-      ) : null}
+        </div>
+      </Link>
 
-      {canForceResetDayOne ? (
-        <section className="surface space-y-4 p-6">
-          <p className="eyebrow">Force Reset Day 1</p>
-          <h2 className="text-2xl">Need to wipe today and start fresh tomorrow?</h2>
-          <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
-            This clears the current run and permanently deletes today&apos;s Day 1
-            session so you can begin again tomorrow from a clean start.
-          </p>
-          <NoticeBanner
-            message="Use this only if you intentionally want to erase today's Day 1 progress."
-            tone="error"
-          />
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <ForceResetProgramStartForm />
-            <Link
-              className="secondary-button w-full sm:w-auto"
-              href="/session"
-            >
-              Keep Today&apos;s Start
-            </Link>
+      {/* Library + Today cards */}
+      <div className="grid grid-cols-2 gap-4">
+        <Link href="/library">
+          <div className="surface flex h-full min-h-[140px] flex-col justify-between p-4" style={{ background: "var(--accent)" }}>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
+              <span className="text-xl font-black text-white">M</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-base font-bold text-white">Library</p>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
+                <svg fill="none" height={14} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} viewBox="0 0 24 24" width={14}>
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
           </div>
-        </section>
-      ) : null}
+        </Link>
 
-      <section className="surface space-y-4 p-6">
-        <p className="eyebrow">Reset Challenge</p>
-        <h2 className="text-2xl">Start over from Day 1</h2>
-        <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
-          This clears the current run&apos;s progress, daily sessions, workbook responses,
-          and run-window consistency logs, then resets the challenge to a fresh Day 1
-          state.
+        <Link href="/session">
+          <div className="surface flex h-full min-h-[140px] flex-col justify-between p-4">
+            <div>
+              <p className="text-lg font-bold">Today</p>
+            </div>
+            <div>
+              <p className="eyebrow">Phase {metrics.currentWeek}</p>
+              <p className="text-sm font-semibold text-[var(--muted)]">
+                Day {metrics.currentDay} of {program.duration_days}
+              </p>
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-xs text-[var(--muted)]">
+                  {metrics.isSessionComplete ? "Complete" : "In progress"}
+                </span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)]">
+                  <svg fill="none" height={14} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} viewBox="0 0 24 24" width={14}>
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Link>
+      </div>
+
+      {/* Quote */}
+      <div className="surface px-6 py-8 text-center">
+        <p className="text-lg font-semibold leading-8">
+          &ldquo;{quote.text}&rdquo;
         </p>
-        <ResetChallengeForm />
-      </section>
+        <p className="mt-3 text-xs font-bold uppercase tracking-widest text-[var(--muted)]">
+          — {quote.author}
+        </p>
+      </div>
 
-      {profile?.motivation_text ? (
-        <section className="surface space-y-3 p-6">
-          <p className="eyebrow">Why You Started</p>
-          <p className="text-lg leading-8">{profile.motivation_text}</p>
-        </section>
-      ) : null}
+      {/* Orange bottom section */}
+      <div className="rounded-3xl p-5 space-y-3" style={{ background: "var(--accent)" }}>
+        <Link
+          className="flex items-center justify-between rounded-full bg-white/20 px-5 py-3"
+          href="/settings"
+        >
+          <span className="font-semibold text-white">Settings</span>
+          <svg fill="none" height={16} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} viewBox="0 0 24 24" width={16}>
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </Link>
+        <Link
+          className="flex items-center justify-between rounded-full bg-white/20 px-5 py-3"
+          href="mailto:support@mindpower.app"
+        >
+          <span className="font-semibold text-white">Support</span>
+          <svg fill="none" height={16} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} viewBox="0 0 24 24" width={16}>
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </Link>
+      </div>
     </div>
   );
 }

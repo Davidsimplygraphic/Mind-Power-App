@@ -1,14 +1,16 @@
 import Link from "next/link";
 
 import { NoticeBanner } from "@/components/notice-banner";
-import { RestartProgramForm } from "@/components/restart-program-form";
 import { requireAuthenticatedUser } from "@/lib/auth";
 import { getUserProgramSnapshot } from "@/lib/data";
 import { getProgramEndState } from "@/lib/program";
 
-export default async function ProgressPage() {
+type ProgressPageProps = { searchParams?: Promise<{ phase?: string }> };
+
+export default async function ProgressPage({ searchParams }: ProgressPageProps) {
   const user = await requireAuthenticatedUser();
   const snapshot = await getUserProgramSnapshot(user.id);
+  const selectedPhase = Math.min(4, Math.max(1, parseInt((await searchParams)?.phase ?? "1", 10)));
 
   if (!snapshot.program) {
     return (
@@ -21,141 +23,122 @@ export default async function ProgressPage() {
 
   if (!snapshot.userProgram || !snapshot.metrics) {
     return (
-      <section className="surface space-y-4 p-6">
-        <p className="eyebrow">Progress</p>
-        <h2 className="text-3xl">Start the program to see your 28-day map.</h2>
-        <p className="text-base leading-7 text-[var(--muted)]">
-          As you complete sessions, each day will fill in here week by week.
-        </p>
-        <Link
-          className="primary-button w-full sm:w-auto"
-          href="/dashboard"
-        >
-          Go to Dashboard
-        </Link>
-      </section>
+      <div className="space-y-4 pb-4">
+        <div className="flex items-center pt-2">
+          <h1 className="text-2xl font-bold">Progress</h1>
+        </div>
+        <div className="surface p-6 space-y-4">
+          <p className="text-base leading-7 text-[var(--muted)]">
+            Start the program to see your 28-day map.
+          </p>
+          <Link className="primary-button w-full" href="/dashboard">
+            Go to Dashboard
+          </Link>
+        </div>
+      </div>
     );
   }
 
   const completedDays = new Set(snapshot.sessions.map((session) => session.day_number));
-  const { metrics, program } = snapshot;
-  const { hasCompletedFinalSession, hasProgramEnded, hasWindowClosedWithoutFinalSession } =
-    getProgramEndState(metrics, program.duration_days);
-  const hasCompleteWeekContent = snapshot.weeks.length >= 4;
+  const { metrics, program, userProgram } = snapshot;
+  const { hasProgramEnded } = getProgramEndState(metrics, program.duration_days);
   const accessibleDay = Math.min(metrics.currentDay, program.duration_days);
 
+  const phaseNames = ["ONE", "TWO", "THREE", "FOUR"];
+  const weekStartDay = (selectedPhase - 1) * 7 + 1;
+  const phaseDays = Array.from({ length: 7 }, (_, i) => weekStartDay + i);
+  const startDate = new Date(userProgram.started_at);
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const getDayOfWeek = (dayNumber: number) => {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + dayNumber - 1);
+    return dayNames[date.getDay()];
+  };
+
   return (
-    <div className="space-y-6">
-      {!hasCompleteWeekContent && hasProgramEnded ? (
-        <NoticeBanner
-          message="Program content is incomplete. Add all 4 weeks before starting the program again."
-          tone="error"
-        />
-      ) : null}
+    <div className="space-y-4 pb-4">
+      {/* Page header */}
+      <div className="flex items-center justify-between pt-2">
+        <h1 className="text-2xl font-bold">Progress</h1>
+      </div>
 
-      <section className="surface space-y-5 p-6">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <p className="eyebrow">
-              {hasProgramEnded
-                ? hasWindowClosedWithoutFinalSession
-                  ? "28-Day Window Complete"
-                  : "Program Complete"
-                : "Progress"}
-            </p>
-            <h2 className="text-4xl">
-              {hasProgramEnded
-                ? hasWindowClosedWithoutFinalSession
-                  ? "Your guided window has ended."
-                  : "Your 28-day run is complete."
-                : "Your 28-day path at a glance."}
-            </h2>
-            <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
-              {hasProgramEnded
-                ? hasWindowClosedWithoutFinalSession
-                  ? "No new session is due today. Use this page to review what was completed, then start again from Day 1 whenever you want another run."
-                  : hasCompletedFinalSession
-                    ? "Everything from this run stays visible here. Review it calmly, then begin again whenever you are ready."
-                    : "Everything from this run stays visible here for review whenever you want."
-                : "Each day fills in as you move through the 28-day program."}
-            </p>
-          </div>
+      {/* Phase tabs */}
+      <div className="surface flex gap-2 p-2">
+        {phaseNames.map((name, idx) => {
+          const phaseNum = idx + 1;
+          const isActive = phaseNum === selectedPhase;
+          return (
+            <Link
+              className={`flex-1 rounded-2xl py-3 text-center text-xs font-bold uppercase tracking-wide transition-colors ${
+                isActive
+                  ? "bg-[var(--accent)] text-white"
+                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
+              }`}
+              href={`/progress?phase=${phaseNum}`}
+              key={phaseNum}
+            >
+              <span className="block text-[0.6rem] opacity-70">Phase</span>
+              {name}
+            </Link>
+          );
+        })}
+      </div>
 
-          {hasProgramEnded ? (
-            <div className="flex flex-col gap-3 sm:flex-row">
-              {hasCompleteWeekContent ? (
-                <RestartProgramForm>Start the Program Again</RestartProgramForm>
-              ) : null}
-              <Link
-                className="secondary-button w-full sm:w-auto"
-                href="/library"
-              >
-                Open Library
-              </Link>
-            </div>
-          ) : null}
-        </div>
+      {/* Day rows */}
+      <div className="surface overflow-hidden">
+        {phaseDays.map((dayNumber, idx) => {
+          const isComplete = completedDays.has(dayNumber);
+          const isToday = !hasProgramEnded && dayNumber === metrics.currentDay;
+          const isAvailable = dayNumber <= accessibleDay;
+          const dayOfWeek = getDayOfWeek(dayNumber);
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="surface-muted p-4">
-            <p className="eyebrow">Completed Days</p>
-            <p className="mt-2 text-3xl">{metrics.completedDaysCount}/28</p>
-          </div>
-          <div className="surface-muted p-4">
-            <p className="eyebrow">Progress</p>
-            <p className="mt-2 text-3xl">{metrics.progressPercentage}%</p>
-          </div>
-          <div className="surface-muted p-4">
-            <p className="eyebrow">Current Streak</p>
-            <p className="mt-2 text-3xl">{metrics.streak}</p>
-          </div>
-        </div>
-      </section>
-
-      {Array.from({ length: 4 }, (_, weekIndex) => {
-        const weekNumber = weekIndex + 1;
-        const firstDay = weekIndex * 7 + 1;
-        const weekDays = Array.from({ length: 7 }, (_, dayIndex) => firstDay + dayIndex);
-
-        return (
-          <section
-            className="surface space-y-4 p-6"
-            key={weekNumber}
-          >
-            <div className="space-y-1">
-              <p className="eyebrow">Week {weekNumber}</p>
-              <h3 className="text-3xl">Days {firstDay}-{firstDay + 6}</h3>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-              {weekDays.map((dayNumber) => {
-                const isComplete = completedDays.has(dayNumber);
-                const isToday = !hasProgramEnded && dayNumber === metrics.currentDay;
-                const isAvailable = dayNumber <= accessibleDay;
-                const tileClassName = isComplete
-                  ? "border-transparent bg-[var(--accent)] text-white"
-                  : isToday
-                    ? "border-[rgba(53,83,67,0.25)] bg-[var(--accent-soft)] text-[var(--foreground)]"
-                    : isAvailable
-                      ? "border-[var(--line)] bg-white/75 text-[var(--foreground)]"
-                      : "border-[rgba(34,48,40,0.08)] bg-white/40 text-[rgba(34,48,40,0.55)]";
-
-                return (
-                  <div
-                    className={`rounded-3xl border p-4 ${tileClassName}`}
-                    key={dayNumber}
-                  >
-                    <p className="text-sm font-semibold">Day {dayNumber}</p>
-                    <p className="mt-3 text-sm">
-                      {isComplete ? "Complete" : isToday ? "Today" : isAvailable ? "Open" : "Upcoming"}
-                    </p>
+          return (
+            <div
+              className={`flex items-center justify-between px-5 py-4 ${idx > 0 ? "border-t border-[var(--line)]" : ""}`}
+              key={dayNumber}
+              style={isToday ? { borderLeft: "3px solid var(--accent)" } : {}}
+            >
+              <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">
+                {dayOfWeek}
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[var(--muted)]">Day {dayNumber}</span>
+                {isComplete ? (
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent)]">
+                    <svg fill="none" height={14} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} viewBox="0 0 24 24" width={14}>
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
                   </div>
-                );
-              })}
+                ) : isToday ? (
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--accent)]" />
+                ) : isAvailable ? (
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--line)]" />
+                ) : (
+                  <div className="h-7 w-7 rounded-full border-2 border-[rgba(0,0,0,0.08)]" />
+                )}
+              </div>
             </div>
-          </section>
-        );
-      })}
+          );
+        })}
+      </div>
+
+      {/* Stats card */}
+      <div className="surface p-5">
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center">
+            <p className="text-2xl font-bold">{metrics.completedDaysCount}</p>
+            <p className="mt-1 text-xs text-[var(--muted)]">Days Done</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold">{metrics.progressPercentage}%</p>
+            <p className="mt-1 text-xs text-[var(--muted)]">Progress</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold">{metrics.streak}</p>
+            <p className="mt-1 text-xs text-[var(--muted)]">Streak</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

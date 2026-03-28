@@ -48,425 +48,251 @@ export type TimerSection = {
 const weekExerciseContent: Record<1 | 2 | 3 | 4, ExerciseContent> = {
   1: {
     weekNumber: 1,
-    title: "Week 1: Foundations and Mental Discipline",
-    intro:
-      "Week 1 introduces the six laws of thought, self-observation, and disciplined contemplation. The PDF frames this as a turning point: create with intention instead of reacting to circumstances.",
+    title: "Week 1 Exercises",
     sections: [
       {
-        id: "w1-summary",
-        type: "text",
-        title: "Summary of Concepts",
-        content:
-          "Key themes from the Week 1 notes: all is law and cause-and-effect, thoughts are real forces, and the inner and outer worlds are connected. The notes also emphasize concentration, contemplation, and weeding out negative thought patterns.",
-      },
-      {
-        id: "w1-six-laws",
+        id: "w1-exercises",
         type: "checklist",
-        title: "Six Laws of the Mind (Daily Review)",
+        title: "Exercises for Week 1",
         items: [
-          { id: "law-1", label: "Thoughts are real forces." },
           {
-            id: "law-2",
-            label: "The mind is a sending and receiving station of thought.",
-          },
-          {
-            id: "law-3",
+            id: "w1-ex-1",
             label:
-              "Law of Attraction: emotionalized thoughts become magnetized and attract like thoughts.",
+              "Write down the six laws on a piece of paper. Spend 5 minutes contemplating these six laws every day.",
           },
           {
-            id: "law-4",
+            id: "w1-ex-2",
             label:
-              "Law of Control: entertain or dismiss thoughts consciously.",
+              "Take one law each day. Start with the first law on the first day, second law on the next day, and so forth. Contemplate that one law for 5 minutes.",
           },
           {
-            id: "law-5",
-            label: "Law of Insertion: choose and insert deliberate thoughts.",
+            id: "w1-ex-3",
+            label:
+              "Contemplate the following statement for 5 minutes each day: \u2018I am in possession of an amazing instrument of power that is transforming my life, now that I\u2019m learning to use it.\u2019",
           },
           {
-            id: "law-6",
-            label: "Law of Connection: inner and outer worlds are connected.",
+            id: "w1-ex-4",
+            label:
+              "Contemplate the following statement for 5 minutes each day: \u2018My personal vibration determines the circumstances and situations that happen to me. My thoughts and my beliefs create my personal vibration.\u2019",
+          },
+          {
+            id: "w1-ex-5",
+            label:
+              "Self-observation: Several times every day, right in the midst of doing something, stop and catch yourself thinking. Observe your mind in action.",
+          },
+          {
+            id: "w1-ex-6",
+            label:
+              "Weeding of negatives: Begin to weed out negatives by experimenting with the 4 techniques. (There is no time limit with this exercise.)",
+          },
+          {
+            id: "w1-ex-7",
+            label: "Go over your notes for 5 to 10 minutes every day.",
           },
         ],
       },
       {
-        id: "w1-law-of-day",
-        type: "prompt",
-        title: "Law of the Day",
-        prompt:
-          "Which law are you contemplating today, and what did you notice in practice?",
-        placeholder: "Write one practical insight from today.",
-        multiline: true,
-      },
-      {
-        id: "w1-contemplation-timer",
+        id: "w1-timer",
         type: "timer",
-        title: "Contemplation Block",
-        label: "Use a focused contemplation period for 5 minutes.",
+        title: "Contemplation Timer",
+        label: "Set a focused contemplation period — 5 minutes is the recommended starting point.",
         suggestedMinutes: 5,
       },
       {
-        id: "w1-self-observation",
+        id: "w1-reflection",
         type: "prompt",
-        title: "Self-Observation Notes",
-        prompt:
-          "When you stopped to observe your thinking today, what thoughts were recurring?",
-        placeholder: "Capture recurring thoughts without judgement.",
-        multiline: true,
-      },
-      {
-        id: "w1-negatives",
-        type: "prompt",
-        title: "Weeding Out Negatives",
-        prompt:
-          "Which negative thought did you catch, and which replacement technique did you use?",
-        placeholder: "Cut off, observe, exaggerate, or counteract with the opposite.",
-        multiline: true,
-      },
-      {
-        id: "w1-weekly-checklist",
-        type: "checklist",
-        title: "Week 1 Practice Checklist",
-        items: [
-          {
-            id: "exercise-1",
-            label:
-              "Write down the six laws and contemplate them for 5 minutes daily.",
-          },
-          {
-            id: "exercise-2",
-            label:
-              "Take one law per day and contemplate it for 5 minutes.",
-          },
-          {
-            id: "exercise-3",
-            label:
-              "Contemplate: I am in possession of an amazing instrument of power.",
-          },
-          {
-            id: "exercise-4",
-            label:
-              "Contemplate: my personal vibration determines circumstances and situations.",
-          },
-          {
-            id: "exercise-5",
-            label:
-              "Several times daily, stop and catch yourself thinking.",
-          },
-          {
-            id: "exercise-6",
-            label:
-              "Practice weeding out negatives using the four techniques.",
-          },
-          {
-            id: "exercise-7",
-            label: "Review your notes for 5 to 10 minutes daily.",
-          },
-        ],
-      },
-      {
-        id: "w1-notes-reflection",
-        type: "prompt",
-        title: "Notes Reflection",
-        prompt:
-          "What one idea from the Week 1 notes is starting to change how you think?",
-        placeholder: "Short reflection for future review.",
+        title: "Daily Reflection",
+        prompt: "What did you notice in today\u2019s practice? Capture any thoughts, insights, or observations.",
+        placeholder: "Write freely \u2014 this is for your benefit only.",
         multiline: true,
       },
     ],
   },
   2: {
     weekNumber: 2,
-    title: "Week 2: Cultivating the Inner Garden",
-    intro:
-      "Week 2 focuses on conscious cultivation: what you consistently plant in the mind becomes your lived harvest. The notes emphasize seeding, visualization, self-observation, and daily deliberate thought.",
+    title: "Week 2 Exercises",
     sections: [
       {
-        id: "w2-summary",
-        type: "text",
-        title: "Summary of Concepts",
-        content:
-          "The Week 2 PDF compares the mind to a fertile garden: if you do not consciously feed it, it feeds itself. The practical focus is to create causes in the inner world that produce the outer conditions you want.",
-      },
-      {
-        id: "w2-quality",
-        type: "prompt",
-        title: "Chosen Quality",
-        prompt:
-          "What quality or characteristic are you cultivating this week?",
-        placeholder: "Example: calm confidence, consistency, courage.",
-      },
-      {
-        id: "w2-seeding-feeling",
-        type: "prompt",
-        title: "Seeding Practice",
-        prompt:
-          "Describe what it feels like to already possess that quality.",
-        placeholder: "Write in present tense.",
-        multiline: true,
-      },
-      {
-        id: "w2-seeding-timer",
-        type: "timer",
-        title: "Seeding / Visualization Block",
-        label: "Set a focused practice period for 5 minutes.",
-        suggestedMinutes: 5,
-      },
-      {
-        id: "w2-laws-personal",
-        type: "prompt",
-        title: "Rewrite the Laws into the Personal",
-        prompt:
-          "Rewrite one of the six laws in first person and note how it lands differently.",
-        placeholder: "Example: my thoughts are real forces.",
-        multiline: true,
-      },
-      {
-        id: "w2-weekly-checklist",
+        id: "w2-exercises",
         type: "checklist",
-        title: "Week 2 Practice Checklist",
+        title: "Exercises for Week 2",
         items: [
           {
-            id: "exercise-1",
+            id: "w2-ex-1",
             label:
-              "Visualize yourself possessing your chosen quality for 5 minutes daily.",
+              "Pick a quality or characteristic that you wish to possess. Spend 5 minutes every day visualising yourself possessing that quality.",
           },
           {
-            id: "exercise-2",
+            id: "w2-ex-2",
             label:
-              "Seed what it feels like to have that quality for 5 minutes daily.",
+              "For 5 minutes every day, seed what it would feel like to have that quality (as in exercise 1).",
           },
           {
-            id: "exercise-3",
+            id: "w2-ex-3",
             label:
-              "Visualize yourself doing the Mind Power exercises proficiently.",
+              "Visualise yourself doing your Mind Power exercises and being proficient at them, for 5 minutes every day.",
           },
           {
-            id: "exercise-4",
+            id: "w2-ex-4",
             label:
-              "Rewrite the six laws into the personal and contemplate daily.",
+              "Contemplation exercise: rewrite the six laws into the personal. For example: \u2018thoughts are real forces\u2019 becomes \u2018my thoughts are real forces\u2019. Spend 5 minutes every day contemplating the six laws.",
           },
           {
-            id: "exercise-5",
+            id: "w2-ex-5",
             label:
-              "Contemplate: my power to think is my power to create; I choose my thoughts.",
+              "Contemplate the following statements for several minutes every day: \u2022 My power to think thoughts is my power to create in my life. \u2022 I have the power to think whatever thoughts I choose.",
           },
           {
-            id: "exercise-6",
+            id: "w2-ex-6",
             label:
-              "Ask yourself during the day: how am I feeling and what am I thinking?",
+              "Self-observation exercise: Ask yourself several times during the course of the day: \u2022 How am I feeling? \u2022 What am I thinking?",
           },
           {
-            id: "exercise-7",
-            label: "Use the Lecture 1 negative-thought techniques.",
+            id: "w2-ex-7",
+            label: "Weed out negatives by using the techniques from Lecture 1.",
           },
           {
-            id: "exercise-8",
-            label: "Review notes for 5 minutes daily.",
+            id: "w2-ex-8",
+            label: "Go over your notes for 5 minutes every day.",
           },
         ],
       },
       {
-        id: "w2-self-observation",
+        id: "w2-timer",
+        type: "timer",
+        title: "Visualisation / Seeding Timer",
+        label: "Set a focused practice period \u2014 5 minutes is the recommended starting point.",
+        suggestedMinutes: 5,
+      },
+      {
+        id: "w2-reflection",
         type: "prompt",
-        title: "Daily Check-In",
-        prompt:
-          "When you asked ‘How am I feeling?’ and ‘What am I thinking?’, what pattern appeared?",
-        placeholder: "Capture one pattern you want to shift.",
+        title: "Daily Reflection",
+        prompt: "What quality are you cultivating this week, and what did you notice in today\u2019s practice?",
+        placeholder: "Write freely \u2014 this is for your benefit only.",
         multiline: true,
       },
     ],
   },
   3: {
     weekNumber: 3,
-    title: "Week 3: Creating Period and Identity Shift",
-    intro:
-      "Week 3 deepens deliberate creation: consciously insert thoughts, combine techniques, and run a daily creating period. The notes stress choosing creation over reaction.",
+    title: "Week 3 Exercises",
     sections: [
       {
-        id: "w3-summary",
-        type: "text",
-        title: "Summary of Concepts",
-        content:
-          "The Week 3 notes center on training the mind to create deliberately. They highlight affirmation, visualization, seeding, acknowledging progress, and a daily creating period (5 to 15 minutes).",
-      },
-      {
-        id: "w3-identity-quality",
-        type: "prompt",
-        title: "Identity Quality",
-        prompt:
-          "Which quality are you practicing as already true about you this week?",
-        placeholder: "Name the quality and describe it in first person.",
-        multiline: true,
-      },
-      {
-        id: "w3-affirmation",
-        type: "prompt",
-        title: "Affirmation Line",
-        prompt:
-          "Write the affirmation you are repeating daily for this quality.",
-        placeholder: "I am ...",
-      },
-      {
-        id: "w3-project",
-        type: "prompt",
-        title: "Project of the Week",
-        prompt:
-          "What specific outcome are you creating this week?",
-        placeholder: "Keep it concrete and observable.",
-        multiline: true,
-      },
-      {
-        id: "w3-project-timer",
-        type: "timer",
-        title: "Project Practice Block",
-        label: "Use a focused creation period for 10 minutes.",
-        suggestedMinutes: 10,
-      },
-      {
-        id: "w3-acknowledging-list",
-        type: "prompt",
-        title: "Acknowledging List",
-        prompt:
-          "List things that make you feel good about yourself and where you are already succeeding.",
-        placeholder: "Aim for at least 15 entries over the week.",
-        multiline: true,
-      },
-      {
-        id: "w3-weekly-checklist",
+        id: "w3-exercises",
         type: "checklist",
-        title: "Week 3 Practice Checklist",
+        title: "Exercises for Week 3",
         items: [
           {
-            id: "exercise-1",
+            id: "w3-ex-1",
             label:
-              "Seed and visualize yourself as the person with your chosen quality.",
+              "Pick a quality that you wish you had. For 5 minutes every day, seed and visualise that you have that quality, that you are that person. Combine seeding and visualisation as one technique.",
           },
           {
-            id: "exercise-2",
-            label: "Affirm daily that you are that person.",
-          },
-          {
-            id: "exercise-3",
+            id: "w3-ex-2",
             label:
-              "Run a 10-minute daily project practice using visualization, seeding, and affirmations.",
+              "Spend 5 minutes each day affirming to yourself that you are that person.",
           },
           {
-            id: "exercise-4",
+            id: "w3-ex-3",
             label:
-              "Build and contemplate an acknowledging list (15-20 items).",
+              "Project of your choice: pick something that you want to see happen to you this week. Spend 10 minutes every day using visualisation, seeding and affirmations to create it.",
           },
           {
-            id: "exercise-5",
+            id: "w3-ex-4",
             label:
-              "Visualize your life working well in every aspect for 5 minutes daily.",
+              "Acknowledging exercise: make an acknowledging list of at least 15 or 20 things that presently make you feel good about yourself and that make you feel you are a success. Spend 5 minutes contemplating this list.",
           },
           {
-            id: "exercise-6",
-            label: "Review notes daily from the beginning of the course.",
+            id: "w3-ex-5",
+            label:
+              "For 5 minutes every day, visualise that your life is going well and is working in every aspect.",
           },
           {
-            id: "exercise-7",
-            label: "Drink 2 to 3 litres of water daily.",
+            id: "w3-ex-6",
+            label:
+              "For 5 minutes every day, go over your notes, starting from the beginning of this course.",
+          },
+          {
+            id: "w3-ex-7",
+            label: "Drink 2 to 3 litres of water every day.",
           },
         ],
       },
       {
-        id: "w3-daily-reflection",
+        id: "w3-timer",
+        type: "timer",
+        title: "Project Practice Timer",
+        label: "Set a focused creation period \u2014 10 minutes is recommended for the project exercise.",
+        suggestedMinutes: 10,
+      },
+      {
+        id: "w3-reflection",
         type: "prompt",
-        title: "Creation vs Reaction",
-        prompt:
-          "Where today did you consciously create instead of react?",
-        placeholder: "Capture one concrete moment.",
+        title: "Daily Reflection",
+        prompt: "What are you creating this week? Note what came up in today\u2019s practice.",
+        placeholder: "Write freely \u2014 this is for your benefit only.",
         multiline: true,
       },
     ],
   },
   4: {
     weekNumber: 4,
-    title: "Week 4: Habit, Intuition, and Self-Image",
-    intro:
-      "Week 4 emphasizes consistency: thought power as a daily habit, connecting with intuition, and reshaping self-image. The notes frame this as disciplined participation in change.",
+    title: "Week 4 Exercises",
     sections: [
       {
-        id: "w4-summary",
-        type: "text",
-        title: "Summary of Concepts",
-        content:
-          "The Week 4 notes focus on making thought power automatic: daily affirming, seeding, visualizing, and weeding negatives. They also include the three-step subconscious process and expanded work on self-image.",
+        id: "w4-exercises",
+        type: "checklist",
+        title: "Exercises for Week 4",
+        items: [
+          {
+            id: "w4-ex-1",
+            label:
+              "For 5 minutes every day repeat the following affirmation: \u201cI always remember my dreams.\u201d Write your dreams down in a special Dream Journal.",
+          },
+          {
+            id: "w4-ex-2",
+            label:
+              "Each day, for 10 minutes, use the three steps to reach the subconscious.",
+          },
+          {
+            id: "w4-ex-3",
+            label:
+              "Contemplation: choose a phrase or law to contemplate for 5 minutes each day.",
+          },
+          {
+            id: "w4-ex-4",
+            label:
+              "Self-image: For 5 minutes each day, re-create an aspect of your self-image using seeding, visualisation and affirmation.",
+          },
+          {
+            id: "w4-ex-5",
+            label:
+              "Project of the week: spend 10 minutes every day visualising and seeding whatever goal you wish.",
+          },
+        ],
+      },
+      {
+        id: "w4-timer",
+        type: "timer",
+        title: "Subconscious / Project Timer",
+        label: "Set a focused practice period \u2014 10 minutes is recommended.",
+        suggestedMinutes: 10,
       },
       {
         id: "w4-dream-journal",
         type: "prompt",
         title: "Dream Journal",
-        prompt:
-          "Record any dreams you remember after repeating the Week 4 dream affirmation.",
-        placeholder: "Write what you remember, even if it is brief.",
+        prompt: "Record any dreams you remember from last night.",
+        placeholder: "Write what you remember, even if it is brief or fragmented.",
         multiline: true,
       },
       {
-        id: "w4-subconscious-request",
+        id: "w4-reflection",
         type: "prompt",
-        title: "Subconscious Request",
-        prompt:
-          "What question or answer are you clearly asking your subconscious mind for?",
-        placeholder: "State it clearly and specifically.",
-        multiline: true,
-      },
-      {
-        id: "w4-subconscious-timer",
-        type: "timer",
-        title: "Subconscious Practice Block",
-        label: "Use the three-step subconscious process for 10 minutes.",
-        suggestedMinutes: 10,
-      },
-      {
-        id: "w4-self-image",
-        type: "prompt",
-        title: "Self-Image Re-Creation",
-        prompt:
-          "Which aspect of your self-image are you deliberately re-creating this week?",
-        placeholder: "Describe the old pattern and the new pattern.",
-        multiline: true,
-      },
-      {
-        id: "w4-weekly-checklist",
-        type: "checklist",
-        title: "Week 4 Practice Checklist",
-        items: [
-          {
-            id: "exercise-1",
-            label:
-              "Repeat daily: I always remember my dreams, and keep a dream journal.",
-          },
-          {
-            id: "exercise-2",
-            label:
-              "Use the three-step subconscious process for 10 minutes daily.",
-          },
-          {
-            id: "exercise-3",
-            label: "Contemplate one phrase or law for 5 minutes daily.",
-          },
-          {
-            id: "exercise-4",
-            label:
-              "Re-create one self-image aspect using seeding, visualization, and affirmation.",
-          },
-          {
-            id: "exercise-5",
-            label:
-              "Spend 10 minutes daily visualizing and seeding your project goal.",
-          },
-        ],
-      },
-      {
-        id: "w4-pattern-note",
-        type: "prompt",
-        title: "Pattern Note",
-        prompt:
-          "What repeating thought or behavior pattern are you noticing this week?",
-        placeholder: "This supports future reflection summaries.",
+        title: "Daily Reflection",
+        prompt: "What came up in today\u2019s subconscious or self-image practice?",
+        placeholder: "Write freely \u2014 this is for your benefit only.",
         multiline: true,
       },
     ],

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"/c/Users/Admin/Documents/GitHub/mind-power-app/app/\\(private\\)/\\(app-shell\\)/\")",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

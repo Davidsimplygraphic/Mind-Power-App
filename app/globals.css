@@ -1,24 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f3eedf;
-  --background-strong: #ebe4d3;
-  --foreground: #223028;
-  --muted: #657066;
-  --line: rgba(34, 48, 40, 0.12);
-  --card: rgba(255, 253, 248, 0.72);
-  --card-strong: rgba(255, 252, 246, 0.9);
-  --accent: #355343;
-  --accent-soft: #dfe8dc;
-  --warning: #9f5a33;
-  --shadow: 0 24px 80px rgba(50, 61, 49, 0.09);
+  --background: #f7f7f7;
+  --foreground: #1c1c1c;
+  --muted: #888888;
+  --line: rgba(0, 0, 0, 0.08);
+  --card: #ffffff;
+  --card-muted: #f2f2f2;
+  --accent: #F5A524;
+  --accent-dark: #d4891a;
+  --accent-soft: #fff3de;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.08), 0 16px 40px rgba(0, 0, 0, 0.06);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-manrope);
-  --font-serif: var(--font-newsreader);
+  --font-serif: var(--font-manrope);
 }
 
 * {
@@ -34,21 +34,7 @@ body {
   min-height: 100vh;
   color: var(--foreground);
   font-family: var(--font-manrope), sans-serif;
-  background:
-    radial-gradient(circle at top, rgba(214, 227, 208, 0.72), transparent 34%),
-    radial-gradient(circle at bottom right, rgba(233, 215, 185, 0.48), transparent 32%),
-    linear-gradient(180deg, #f7f3ea 0%, #efe8da 55%, #e7dfcf 100%);
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(140deg, rgba(255, 255, 255, 0.3), transparent 24%),
-    linear-gradient(320deg, rgba(255, 255, 255, 0.16), transparent 28%);
-  opacity: 0.85;
+  background: #f0f0f0;
 }
 
 a {
@@ -66,40 +52,42 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-newsreader), serif;
-  letter-spacing: -0.03em;
-  line-height: 1.02;
+  font-family: var(--font-manrope), sans-serif;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-weight: 700;
 }
 
 ::selection {
-  background: rgba(53, 83, 67, 0.18);
+  background: rgba(245, 165, 36, 0.2);
 }
 
 .page-wrap {
   position: relative;
-  max-width: 74rem;
+  max-width: 480px;
   margin: 0 auto;
+  background: #f7f7f7;
+  min-height: 100vh;
 }
 
 .surface {
   border: 1px solid var(--line);
   background: var(--card);
-  border-radius: 28px;
+  border-radius: 20px;
   box-shadow: var(--shadow);
-  backdrop-filter: blur(20px);
 }
 
 .surface-muted {
-  border: 1px solid rgba(34, 48, 40, 0.08);
-  background: var(--card-strong);
-  border-radius: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: var(--card-muted);
+  border-radius: 14px;
 }
 
 .eyebrow {
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -112,26 +100,24 @@ h4 {
 
 .field {
   width: 100%;
-  border: 1px solid rgba(34, 48, 40, 0.12);
-  border-radius: 20px;
-  padding: 0.95rem 1rem;
-  background: rgba(255, 255, 255, 0.72);
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  background: #fff;
   color: var(--foreground);
   transition:
     border-color 140ms ease,
-    background-color 140ms ease,
     box-shadow 140ms ease;
 }
 
 .field::placeholder {
-  color: #8a938b;
+  color: #aaa;
 }
 
 .field:focus {
   outline: none;
-  border-color: rgba(53, 83, 67, 0.28);
-  box-shadow: 0 0 0 4px rgba(53, 83, 67, 0.08);
-  background: rgba(255, 255, 255, 0.92);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(245, 165, 36, 0.15);
 }
 
 .primary-button,
@@ -143,69 +129,91 @@ h4 {
   justify-content: center;
   border-radius: 999px;
   transition:
-    transform 140ms ease,
-    background-color 140ms ease,
-    border-color 140ms ease,
-    color 140ms ease;
+    transform 120ms ease,
+    background-color 120ms ease,
+    opacity 120ms ease;
 }
 
 .primary-button {
-  min-height: 3.5rem;
-  border: 1px solid rgba(30, 45, 37, 0.1);
+  min-height: 3rem;
+  border: none;
   background: var(--accent);
   color: white;
-  font-weight: 600;
-  padding: 0.85rem 1.25rem;
+  font-weight: 700;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
 }
 
 .primary-button:hover {
   transform: translateY(-1px);
-  background: #2f493b;
+  background: var(--accent-dark);
 }
 
 .primary-button:disabled {
   cursor: not-allowed;
-  opacity: 0.78;
+  opacity: 0.7;
   transform: none;
 }
 
 .secondary-button {
-  min-height: 3.25rem;
-  border: 1px solid rgba(34, 48, 40, 0.12);
-  background: rgba(255, 255, 255, 0.7);
+  min-height: 3rem;
+  border: 1.5px solid var(--line);
+  background: #fff;
   color: var(--foreground);
   font-weight: 600;
-  padding: 0.8rem 1.15rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
 }
 
 .secondary-button:hover {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.9);
+  background: #fafafa;
 }
 
 .quiet-button {
-  min-height: 2.65rem;
-  padding: 0.65rem 1rem;
-  border: 1px solid rgba(34, 48, 40, 0.1);
-  background: rgba(255, 255, 255, 0.55);
+  min-height: 2.5rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.7);
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .quiet-button:hover {
   color: var(--foreground);
-  background: rgba(255, 255, 255, 0.82);
+  background: #fff;
 }
 
 .nav-link {
-  min-height: 3rem;
-  padding: 0.7rem 0.9rem;
-  color: var(--muted);
-  font-size: 0.9rem;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 3.25rem;
+  padding: 0.45rem 0.5rem;
+  color: #bbb;
+  font-size: 0.6rem;
   font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .nav-link-active {
-  background: rgba(53, 83, 67, 0.12);
+  color: var(--accent);
+}
+
+.notice-banner-info {
+  background: var(--accent-soft);
+  border: 1px solid rgba(245, 165, 36, 0.3);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  font-size: 0.9rem;
   color: var(--foreground);
+}
+
+.notice-banner-error {
+  background: #fff0f0;
+  border: 1px solid rgba(220, 50, 50, 0.2);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  font-size: 0.9rem;
+  color: #c0392b;
 }
