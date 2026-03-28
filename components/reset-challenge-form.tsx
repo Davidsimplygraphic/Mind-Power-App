@@ -30,9 +30,9 @@ export function ResetChallengeForm({
 
   return (
     <div className="surface-muted space-y-3 p-4">
-      <p className="text-sm text-[var(--warning)]">
-        This clears your current 28-day run (sessions, workbook responses, and run
-        consistency logs) and returns you to Day 1.
+      <p className="text-sm text-red-600">
+        This clears all sessions, exercise responses, and progress logs, and resets
+        Day 1 to today. This cannot be undone.
       </p>
       <form
         action={resetChallengeAction}

@@ -5,7 +5,6 @@ import { ExerciseTimer } from "@/components/exercise-timer";
 import { ExerciseWorkbook } from "@/components/exercise-workbook";
 import { NoticeBanner } from "@/components/notice-banner";
 import { RestartProgramForm } from "@/components/restart-program-form";
-import { SessionContentTabs } from "@/components/session-content-tabs";
 import { SessionForm } from "@/components/session-form";
 import { requireAuthenticatedUser } from "@/lib/auth";
 import { getExerciseResponsesForRunDay, getPublicAudioUrl, getUserProgramSnapshot } from "@/lib/data";
@@ -20,14 +19,8 @@ type SessionPageProps = {
 };
 
 function formatPromiseValue(value: boolean | null) {
-  if (value === true) {
-    return "Yes";
-  }
-
-  if (value === false) {
-    return "No";
-  }
-
+  if (value === true) return "Yes";
+  if (value === false) return "No";
   return "Left unanswered";
 }
 
@@ -48,19 +41,19 @@ export default async function SessionPage({ searchParams }: SessionPageProps) {
 
   if (!snapshot.userProgram || !snapshot.metrics) {
     return (
-      <section className="surface space-y-4 p-6">
-        <p className="eyebrow">Session</p>
-        <h2 className="text-3xl">Start the program to unlock today&apos;s session.</h2>
-        <p className="text-base leading-7 text-[var(--muted)]">
-          Once Day 1 begins, this page will always tell you exactly what to do next.
-        </p>
-        <Link
-          className="primary-button w-full sm:w-auto"
-          href="/dashboard"
-        >
-          Go to Dashboard
-        </Link>
-      </section>
+      <div className="space-y-4 pb-4">
+        <div className="flex items-center pt-2">
+          <h1 className="text-2xl font-bold">Today</h1>
+        </div>
+        <div className="surface space-y-4 p-6">
+          <p className="text-base leading-7 text-[var(--muted)]">
+            Start the program from the home screen to unlock today&apos;s session.
+          </p>
+          <Link className="primary-button w-full" href="/dashboard">
+            Go to Home
+          </Link>
+        </div>
+      </div>
     );
   }
 
@@ -71,48 +64,44 @@ export default async function SessionPage({ searchParams }: SessionPageProps) {
 
   if (hasProgramEnded) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 pb-4">
+        <div className="flex items-center pt-2">
+          <h1 className="text-2xl font-bold">Today</h1>
+        </div>
         {!hasCompleteWeekContent ? (
           <NoticeBanner
             message="Program content is incomplete. Add all 4 weeks before starting the program again."
             tone="error"
           />
         ) : null}
-
-        <section className="surface space-y-4 p-6">
+        <div className="surface space-y-4 p-6">
           <p className="eyebrow">
             {hasWindowClosedWithoutFinalSession ? "28-Day Window Complete" : "Program Complete"}
           </p>
-          <h2 className="text-3xl">
+          <h2 className="text-2xl font-bold">
             {hasWindowClosedWithoutFinalSession
               ? "Your guided window has ended."
               : "Your 28-day run is complete."}
           </h2>
-          <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
+          <p className="text-base leading-7 text-[var(--muted)]">
             {hasWindowClosedWithoutFinalSession
-              ? "No new session is due today. Review the run you just finished, then start again from Day 1 whenever you want another pass."
+              ? "No new session is due today. Review the run you just finished, then start again from Day 1 whenever you want."
               : hasCompletedFinalSession
-                ? "Day 28 is complete. You can revisit the library, read through your progress, or begin a fresh 28-day run."
-                : "You can still revisit the library and read through your progress whenever you want."}
+                ? "Day 28 is complete. Revisit the library, review your progress, or begin a fresh 28-day run."
+                : "You can still revisit the library and review your progress whenever you want."}
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex flex-col gap-3">
             {hasCompleteWeekContent ? (
               <RestartProgramForm>Start the Program Again</RestartProgramForm>
             ) : null}
-            <Link
-              className="secondary-button w-full sm:w-auto"
-              href="/progress"
-            >
+            <Link className="secondary-button w-full" href="/progress">
               View Progress
             </Link>
-            <Link
-              className="secondary-button w-full sm:w-auto"
-              href="/library"
-            >
+            <Link className="secondary-button w-full" href="/library">
               Open Library
             </Link>
           </div>
-        </section>
+        </div>
       </div>
     );
   }
@@ -125,6 +114,7 @@ export default async function SessionPage({ searchParams }: SessionPageProps) {
           isCanonical: track.path === currentWeekContent.audio_path,
         }))
       : [];
+
   const exerciseTimerKey = `mind-power-exercise-timer-${user.id}-${userProgram.program_id}-${metrics.currentDay}-${userProgram.started_at}`;
   const exerciseContent = getExerciseContentForWeek(metrics.currentWeek);
   const exerciseResponses = await getExerciseResponsesForRunDay(
@@ -134,169 +124,126 @@ export default async function SessionPage({ searchParams }: SessionPageProps) {
   );
 
   return (
-    <div className="space-y-6">
-      {error ? (
-        <NoticeBanner
-          message={error}
-          tone="error"
-        />
-      ) : null}
-      {!hasCompleteWeekContent ? (
-        <NoticeBanner
-          message="Program content is incomplete. Add all 4 weeks so today's session always has the right guidance."
-          tone="error"
-        />
-      ) : null}
+    <div className="space-y-4 pb-4">
+      {error ? <NoticeBanner message={error} tone="error" /> : null}
 
-      <section className="surface space-y-4 p-6">
-        <p className="eyebrow">Today&apos;s Session</p>
-        <div className="space-y-2">
-          <h2 className="text-4xl">
-            Day {metrics.currentDay} - Week {metrics.currentWeek}
-          </h2>
-          <p className="text-base leading-7 text-[var(--muted)]">
-            {metrics.isWeekStartDay
-              ? "Start the week with this week's audio guidance, then complete the exercises and reflection."
-              : "Repeat this week's exercises, reflect briefly, and close the day with honesty."}
-          </p>
+      {/* Header */}
+      <div className="flex items-center justify-between pt-2">
+        <h1 className="text-2xl font-bold">Today</h1>
+        <div className="surface-muted rounded-full px-4 py-2 text-sm font-semibold text-[var(--muted)]">
+          Phase {metrics.currentWeek} · Day {metrics.currentDay}
         </div>
-      </section>
+      </div>
 
-      {!currentWeekContent ? (
-        <section className="surface space-y-4 p-6">
-          <p className="eyebrow">Missing Week Content</p>
-          <h2 className="text-3xl">This week has not been configured yet.</h2>
-          <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
-            Add the matching `program_weeks` row and exercise text before using this
-            session page for the current day.
-          </p>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Link
-              className="secondary-button w-full sm:w-auto"
-              href="/library"
-            >
-              Open Library
-            </Link>
-            <Link
-              className="secondary-button w-full sm:w-auto"
-              href="/dashboard"
-            >
-              Back to Dashboard
-            </Link>
+      {todaySession ? (
+        /* Session already complete */
+        <div className="surface space-y-4 p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)]">
+              <svg fill="none" height={18} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} viewBox="0 0 24 24" width={18}>
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-bold">Day {metrics.currentDay} Complete</p>
+              <p className="text-xs text-[var(--muted)]">{todaySession.session_date}</p>
+            </div>
           </div>
-        </section>
-      ) : null}
-
-      {currentWeekContent ? (
-        <SessionContentTabs
-          audioContent={
-            metrics.isWeekStartDay ? (
-              <AudioCard
-                tracks={weekAudioTracks}
-                title={currentWeekContent.title ?? `Week ${metrics.currentWeek}`}
-              />
-            ) : (
-              <div className="surface-muted space-y-3 p-5">
-                <p className="eyebrow">Audio</p>
-                <h3 className="text-2xl">Today is a practice day.</h3>
-                <p className="max-w-2xl text-base leading-7 text-[var(--muted)]">
-                  The canonical week-start audio is surfaced on Day{" "}
-                  {((metrics.currentWeek - 1) * 7) + 1}. You can still revisit the
-                  full audio list anytime in the library.
-                </p>
-                <Link
-                  className="secondary-button w-full sm:w-auto"
-                  href="/library"
-                >
-                  Open Library Audio
-                </Link>
-              </div>
-            )
-          }
-          exercisesContent={
-            exerciseContent ? (
-              <ExerciseWorkbook
-                content={exerciseContent}
-                dayNumber={metrics.currentDay}
-                initialResponses={exerciseResponses}
-                key={`workbook-${userProgram.id}-${metrics.currentDay}-${metrics.currentWeek}`}
-                programId={userProgram.program_id}
-                timerStorageKey={exerciseTimerKey}
-                userProgramId={userProgram.id}
-                weekNumber={metrics.currentWeek}
-              />
-            ) : (
-              <div className="surface-muted space-y-3 p-5">
-                <p className="eyebrow">Exercises</p>
-                <h3 className="text-2xl">Workbook content unavailable.</h3>
-                <p className="text-base leading-7 text-[var(--muted)]">
-                  {currentWeekContent.exercise_text?.trim() ||
-                    "Exercise text is missing for this week. Update the matching program_weeks row to add it."}
-                </p>
-              </div>
-            )
-          }
-        />
-      ) : null}
-
-      {currentWeekContent && !todaySession ? (
-        <ExerciseTimer
-          key={exerciseTimerKey}
-          storageKey={exerciseTimerKey}
-        />
-      ) : null}
-
-      {currentWeekContent && todaySession ? (
-        <section className="surface space-y-5 p-6">
-          <div className="space-y-2">
-            <p className="eyebrow">Completed</p>
-            <h2 className="text-3xl">Today&apos;s session is already complete.</h2>
-            <p className="text-sm text-[var(--muted)]">
-              You can review what you logged below, then return tomorrow for the next
-              step.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="surface-muted p-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="surface-muted p-3">
               <p className="eyebrow">Exercises</p>
-              <p className="mt-2 text-lg">
+              <p className="mt-1 text-sm font-semibold">
                 {todaySession.exercise_completed ? "Completed" : "Not checked off"}
               </p>
             </div>
-            <div className="surface-muted p-4">
+            <div className="surface-muted p-3">
               <p className="eyebrow">Promise</p>
-              <p className="mt-2 text-lg">{formatPromiseValue(todaySession.promise_kept)}</p>
+              <p className="mt-1 text-sm font-semibold">{formatPromiseValue(todaySession.promise_kept)}</p>
             </div>
+          </div>
+          {todaySession.reflection_text ? (
             <div className="surface-muted p-4">
-              <p className="eyebrow">Session Date</p>
-              <p className="mt-2 text-lg">{todaySession.session_date}</p>
+              <p className="eyebrow mb-2">Reflection</p>
+              <p className="whitespace-pre-wrap text-sm leading-7">
+                {todaySession.reflection_text}
+              </p>
             </div>
-          </div>
+          ) : null}
+          <p className="text-center text-sm text-[var(--muted)]">
+            Return tomorrow for Day {metrics.currentDay + 1}.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Exercises — front and centre */}
+          {exerciseContent ? (
+            <ExerciseWorkbook
+              content={exerciseContent}
+              dayNumber={metrics.currentDay}
+              initialResponses={exerciseResponses}
+              key={`workbook-${userProgram.id}-${metrics.currentDay}-${metrics.currentWeek}`}
+              programId={userProgram.program_id}
+              timerStorageKey={exerciseTimerKey}
+              userProgramId={userProgram.id}
+              weekNumber={metrics.currentWeek}
+            />
+          ) : null}
 
-          <div className="surface-muted p-5">
-            <p className="eyebrow">Reflection</p>
-            <p className="mt-3 whitespace-pre-wrap text-base leading-8">
-              {todaySession.reflection_text?.trim() || "No reflection was added today."}
-            </p>
-          </div>
-        </section>
-      ) : currentWeekContent ? (
-        <section className="surface space-y-5 p-6">
-          <div className="space-y-2">
-            <p className="eyebrow">Check In</p>
-            <h2 className="text-3xl">Close today cleanly.</h2>
-            <p className="text-sm leading-6 text-[var(--muted)]">
-              Your in-progress draft is saved locally in this browser, so a refresh
-              won&apos;t wipe what you&apos;ve written before you submit.
-            </p>
-          </div>
-
-          <SessionForm
-            draftKey={`mind-power-session-${userProgram.id}-${userProgram.started_at}-${metrics.currentDay}`}
+          {/* Timer */}
+          <ExerciseTimer
+            key={exerciseTimerKey}
+            storageKey={exerciseTimerKey}
           />
-        </section>
-      ) : null}
+
+          {/* Audio — shown on week-start days, collapsible otherwise */}
+          {currentWeekContent ? (
+            metrics.isWeekStartDay ? (
+              <div className="surface p-5">
+                <p className="eyebrow mb-3">Week {metrics.currentWeek} Audio</p>
+                <AudioCard
+                  tracks={weekAudioTracks}
+                  title={currentWeekContent.title ?? `Week ${metrics.currentWeek}`}
+                />
+              </div>
+            ) : (
+              <details className="surface p-5">
+                <summary className="cursor-pointer list-none font-semibold text-[var(--foreground)]">
+                  Week {metrics.currentWeek} Audio
+                </summary>
+                <div className="mt-4">
+                  <p className="mb-3 text-sm text-[var(--muted)]">
+                    The weekly audio is available in the library anytime.
+                  </p>
+                  <Link className="secondary-button w-full text-center" href="/library">
+                    Open Library Audio
+                  </Link>
+                </div>
+              </details>
+            )
+          ) : null}
+
+          {/* Close the day */}
+          {currentWeekContent ? (
+            <div className="surface space-y-4 p-5">
+              <div>
+                <p className="font-bold">Close Today</p>
+                <p className="mt-1 text-sm text-[var(--muted)]">
+                  When you&apos;re done, log your reflection and mark the day complete.
+                </p>
+              </div>
+              <SessionForm
+                draftKey={`mind-power-session-${userProgram.id}-${userProgram.started_at}-${metrics.currentDay}`}
+              />
+            </div>
+          ) : (
+            <div className="surface p-5">
+              <p className="text-sm text-[var(--muted)]">
+                This week&apos;s content hasn&apos;t been configured yet. Add the matching program week before logging a session.
+              </p>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
